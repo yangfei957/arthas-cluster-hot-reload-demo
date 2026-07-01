@@ -80,7 +80,7 @@ This project is intended for learning and secondary development. It is not a pro
 ## Architecture
 
 <p align="center">
-  <img src="docs/images/architecture.svg" alt="Arthas cluster hot reload architecture" width="100%">
+  <img src="docs/images/architecture-en.svg" alt="Arthas cluster hot reload architecture" width="100%">
 </p>
 
 Core design:
@@ -95,7 +95,7 @@ Core design:
 ## Workflow
 
 <p align="center">
-  <img src="docs/images/workflow.svg" alt="Cluster hot reload workflow" width="100%">
+  <img src="docs/images/workflow-en.svg" alt="Cluster hot reload workflow" width="100%">
 </p>
 
 ## Project Layout
