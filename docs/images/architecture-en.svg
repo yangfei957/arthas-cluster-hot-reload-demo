@@ -57,7 +57,7 @@
 
   <g filter="url(#shadow)">
     <rect x="720" y="126" width="270" height="220" rx="18" fill="#fff7ed" stroke="#fed7aa"/>
-    <text class="card-title" x="744" y="162">State & Messaging</text>
+    <text class="card-title" x="744" y="162">State &amp; Messaging</text>
     <text class="card-sub" x="744" y="184">Broadcasts and task logs</text>
     <rect x="744" y="210" width="222" height="52" rx="12" fill="#ffffff" stroke="#fed7aa"/>
     <text class="item-title" x="762" y="232">Redis Topic</text>
@@ -67,13 +67,13 @@
   </g>
 
   <g filter="url(#shadow)">
-    <rect x="1040" y="126" width="194" height="220" rx="18" fill="#fefce8" stroke="#fde68a"/>
-    <text class="card-title" x="1064" y="162">Config & Security</text>
-    <text class="card-sub" x="1064" y="184">Switches, services, secret</text>
-    <rect x="1064" y="210" width="146" height="44" rx="12" fill="#ffffff" stroke="#fde68a"/>
-    <text class="item-title" x="1082" y="236">RELOAD_CONFIG</text>
-    <rect x="1064" y="270" width="146" height="44" rx="12" fill="#ffffff" stroke="#fde68a"/>
-    <text class="item-title" x="1082" y="296">secret-key</text>
+    <rect x="1010" y="126" width="224" height="220" rx="18" fill="#fefce8" stroke="#fde68a"/>
+    <text class="card-title" x="1034" y="162">Config &amp; Security</text>
+    <text class="card-sub" x="1034" y="184">Switch, services, secret</text>
+    <rect x="1034" y="210" width="176" height="44" rx="12" fill="#ffffff" stroke="#fde68a"/>
+    <text class="item-title" x="1052" y="236">RELOAD_CONFIG</text>
+    <rect x="1034" y="270" width="176" height="44" rx="12" fill="#ffffff" stroke="#fde68a"/>
+    <text class="item-title" x="1052" y="296">secret-key</text>
   </g>
 
   <g filter="url(#shadow)">
@@ -95,27 +95,27 @@
     <rect x="704" y="452" width="430" height="220" rx="18" fill="#f5f3ff" stroke="#ddd6fe"/>
     <text class="card-title" x="728" y="488">Local Execution</text>
     <text class="card-sub" x="728" y="510">Class reload, MyBatis refresh, restart recovery</text>
-    <rect x="728" y="538" width="120" height="72" rx="14" fill="#ffffff" stroke="#ddd6fe"/>
+    <rect x="728" y="538" width="112" height="72" rx="14" fill="#ffffff" stroke="#ddd6fe"/>
     <text class="item-title" x="754" y="565">Arthas</text>
     <text class="item-text" x="744" y="588">class reload</text>
-    <rect x="870" y="538" width="120" height="72" rx="14" fill="#ffffff" stroke="#ddd6fe"/>
-    <text class="item-title" x="894" y="565">MyBatis</text>
-    <text class="item-text" x="890" y="588">XML refresh</text>
-    <rect x="1012" y="538" width="98" height="72" rx="14" fill="#ffffff" stroke="#ddd6fe"/>
-    <text class="item-title" x="1028" y="565">Recovery Files</text>
-    <text class="item-text" x="1028" y="588">hot-reload</text>
+    <rect x="858" y="538" width="112" height="72" rx="14" fill="#ffffff" stroke="#ddd6fe"/>
+    <text class="item-title" x="884" y="565">MyBatis</text>
+    <text class="item-text" x="878" y="588">XML refresh</text>
+    <rect x="988" y="538" width="122" height="72" rx="14" fill="#ffffff" stroke="#ddd6fe"/>
+    <text class="item-title" x="1018" y="565">Recovery</text>
+    <text class="item-text" x="1016" y="588">hot-reload</text>
   </g>
 
   <path class="line-blue" d="M286 236 C320 236 326 236 360 236"/>
   <text class="label" x="308" y="224">Submit</text>
   <path class="line-blue" d="M630 236 C666 236 684 236 720 236"/>
-  <text class="label" x="654" y="224">Write DB / Publish</text>
+  <text class="label" x="654" y="224">DB + Redis</text>
   <path class="line-orange" d="M855 346 C855 382 660 410 494 452"/>
   <text class="label" x="660" y="406">Node notified</text>
   <path class="line-green" d="M608 562 C650 562 662 562 704 562"/>
   <text class="label" x="625" y="548">Run locally</text>
   <path class="line-orange" d="M392 452 C392 410 770 386 855 346"/>
   <text class="label" x="480" y="414">Pull task / write result</text>
-  <path class="line-blue" d="M990 236 C1018 236 1012 236 1040 236"/>
-  <text class="label" x="1000" y="224">Read config</text>
+  <path class="line-blue" d="M990 236 C1000 236 1000 236 1010 236"/>
+  <text class="label" x="996" y="224">Config</text>
 </svg>
