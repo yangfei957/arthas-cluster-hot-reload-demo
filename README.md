@@ -12,6 +12,10 @@
   <img alt="Multi Database" src="https://img.shields.io/badge/Database-MySQL%20%7C%20PostgreSQL%20%7C%20Oracle%20%7C%20SQL%20Server-4B5563?style=flat-square">
 </p>
 
+<p align="center">
+  <a href="README.md">中文</a> | <a href="README_EN.md">English</a>
+</p>
+
 基于 Arthas、Redis 发布订阅和关系型数据库任务日志实现的 Spring Boot 集群热重载示例项目。
 
 这个项目用于演示：在不重启服务的情况下，把指定的 `.class` 或 MyBatis Mapper XML 文件下发到一个或多个 Spring Boot 服务节点，并让每个节点在本机执行热重载，同时把执行状态和结果写入数据库，方便页面查询和失败重试。
