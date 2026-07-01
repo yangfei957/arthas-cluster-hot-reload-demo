@@ -1,0 +1,93 @@
+### 单机热重载接口示例
+### 使用说明：
+### 1. 先启动 demo 服务，并确认 Arthas HTTP 端口可用。
+### 2. 重载后测试文件放在 src/main/java/io/github/hotreload/demo/test/reload-after。
+### 3. 单机上传接口需要请求头 hot-reload-secret，默认值见 application.yml。
+
+@baseUrl = http://localhost:8080
+@secretKey = demo-hot-reload
+
+### 1. 单机热重载：自动识别 Spring Bean class
+POST {{baseUrl}}/standaloneHotReload/hot-reload/all
+hot-reload-secret: {{secretKey}}
+Content-Type: multipart/form-data; boundary=WebAppBoundary
+Accept: text/plain
+
+--WebAppBoundary
+Content-Disposition: form-data; name="file"; filename="TestHotReloadServiceImpl.class"
+Content-Type: application/octet-stream
+
+< ../src/main/java/io/github/hotreload/demo/test/reload-after/TestHotReloadServiceImpl.class
+--WebAppBoundary--
+
+
+### 2. 单机热重载：指定 Spring Bean class 和 beanName
+POST {{baseUrl}}/standaloneHotReload/hot-reload/all?type=SPRING_BEAN&beanName=testHotReloadServiceImpl
+hot-reload-secret: {{secretKey}}
+Content-Type: multipart/form-data; boundary=WebAppBoundary
+Accept: text/plain
+
+--WebAppBoundary
+Content-Disposition: form-data; name="file"; filename="TestHotReloadServiceImpl.class"
+Content-Type: application/octet-stream
+
+< ../src/main/java/io/github/hotreload/demo/test/reload-after/TestHotReloadServiceImpl.class
+--WebAppBoundary--
+
+
+### 3. 单机热重载：指定普通 class
+POST {{baseUrl}}/standaloneHotReload/hot-reload/all?type=COMMON_CLASS
+hot-reload-secret: {{secretKey}}
+Content-Type: multipart/form-data; boundary=WebAppBoundary
+Accept: text/plain
+
+--WebAppBoundary
+Content-Disposition: form-data; name="file"; filename="TestHotReloadUtil.class"
+Content-Type: application/octet-stream
+
+< ../src/main/java/io/github/hotreload/demo/test/reload-after/TestHotReloadUtil.class
+--WebAppBoundary--
+
+
+### 4. 单机热重载：指定 MyBatis Mapper XML
+POST {{baseUrl}}/standaloneHotReload/hot-reload/all?type=MYBATIS_XML
+hot-reload-secret: {{secretKey}}
+Content-Type: multipart/form-data; boundary=WebAppBoundary
+Accept: text/plain
+
+--WebAppBoundary
+Content-Disposition: form-data; name="file"; filename="TestHotReloadMapper.xml"
+Content-Type: application/xml
+
+< ../src/main/java/io/github/hotreload/demo/test/reload-after/TestHotReloadMapper.xml
+--WebAppBoundary--
+
+
+### 5. 调用 Arthas version 命令
+POST {{baseUrl}}/standaloneHotReload/hot-reload/command
+Content-Type: application/json
+Accept: text/plain
+
+{
+  "command": "version"
+}
+
+
+### 6. 调用 Arthas jad 命令查看测试类
+POST {{baseUrl}}/standaloneHotReload/hot-reload/command
+Content-Type: application/json
+Accept: text/plain
+
+{
+  "command": "jad io.github.hotreload.demo.test.TestHotReloadServiceImpl"
+}
+
+
+### 7. 调用 Arthas sc 命令查看类加载信息
+POST {{baseUrl}}/standaloneHotReload/hot-reload/command
+Content-Type: application/json
+Accept: text/plain
+
+{
+  "command": "sc -d io.github.hotreload.demo.test.TestHotReloadServiceImpl"
+}

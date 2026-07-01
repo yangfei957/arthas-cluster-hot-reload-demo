@@ -1,0 +1,9 @@
+spring:
+  datasource:
+    driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
+    url: jdbc:sqlserver://127.0.0.1:1433;databaseName=hot_reload_demo;encrypt=false
+    username: sa
+    password: Root@123456
+
+hot-reload:
+  database-type: SQL_SERVER

@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="520" viewBox="0 0 1280 520" role="img" aria-labelledby="title desc">
+  <title id="title">集群热重载执行流程</title>
+  <desc id="desc">展示从节点发现到创建任务、Redis 通知、节点执行和结果回写的流程。</desc>
+  <defs>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#0f172a" flood-opacity="0.10"/>
+    </filter>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#2563eb"/>
+    </marker>
+    <style>
+      .bg { fill:#f8fafc; }
+      .title { fill:#0f172a; font:700 28px "Inter","Segoe UI","Microsoft YaHei",sans-serif; }
+      .subtitle { fill:#475569; font:400 15px "Inter","Segoe UI","Microsoft YaHei",sans-serif; }
+      .step-title { fill:#0f172a; font:700 15px "Inter","Segoe UI","Microsoft YaHei",sans-serif; }
+      .step-text { fill:#475569; font:400 12px "Inter","Segoe UI","Microsoft YaHei",sans-serif; }
+      .num { fill:#ffffff; font:700 14px "Inter","Segoe UI","Microsoft YaHei",sans-serif; }
+      .line { stroke:#2563eb; stroke-width:2.4; fill:none; marker-end:url(#arrow); }
+      .note { fill:#64748b; font:600 12px "Inter","Segoe UI","Microsoft YaHei",sans-serif; }
+    </style>
+  </defs>
+
+  <rect class="bg" x="0" y="0" width="1280" height="520" rx="28"/>
+  <text class="title" x="52" y="58">集群热重载执行流程</text>
+  <text class="subtitle" x="52" y="86">先发现节点，再固化任务和补丁文件，最后由目标节点本机执行并写回结果。</text>
+
+  <path class="line" d="M152 244 L286 244"/>
+  <path class="line" d="M404 244 L538 244"/>
+  <path class="line" d="M656 244 L790 244"/>
+  <path class="line" d="M908 244 L1042 244"/>
+
+  <g filter="url(#shadow)">
+    <rect x="52" y="160" width="128" height="168" rx="18" fill="#eff6ff" stroke="#bfdbfe"/>
+    <circle cx="82" cy="194" r="18" fill="#2563eb"/>
+    <text class="num" x="77" y="199">1</text>
+    <text class="step-title" x="74" y="236">刷新节点</text>
+    <text class="step-text" x="74" y="264">discover</text>
+    <text class="step-text" x="74" y="284">Redis 广播</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="304" y="160" width="128" height="168" rx="18" fill="#ecfdf5" stroke="#bbf7d0"/>
+    <circle cx="334" cy="194" r="18" fill="#059669"/>
+    <text class="num" x="329" y="199">2</text>
+    <text class="step-title" x="326" y="236">节点上报</text>
+    <text class="step-text" x="326" y="264">appName</text>
+    <text class="step-text" x="326" y="284">env + ip</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="556" y="160" width="128" height="168" rx="18" fill="#fff7ed" stroke="#fed7aa"/>
+    <circle cx="586" cy="194" r="18" fill="#f97316"/>
+    <text class="num" x="581" y="199">3</text>
+    <text class="step-title" x="578" y="236">创建任务</text>
+    <text class="step-text" x="578" y="264">保存任务</text>
+    <text class="step-text" x="578" y="284">文件和实例</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="808" y="160" width="128" height="168" rx="18" fill="#f5f3ff" stroke="#ddd6fe"/>
+    <circle cx="838" cy="194" r="18" fill="#7c3aed"/>
+    <text class="num" x="833" y="199">4</text>
+    <text class="step-title" x="830" y="236">目标执行</text>
+    <text class="step-text" x="830" y="264">Arthas</text>
+    <text class="step-text" x="830" y="284">MyBatis</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="1060" y="160" width="168" height="168" rx="18" fill="#fefce8" stroke="#fde68a"/>
+    <circle cx="1090" cy="194" r="18" fill="#ca8a04"/>
+    <text class="num" x="1085" y="199">5</text>
+    <text class="step-title" x="1082" y="236">结果回写</text>
+    <text class="step-text" x="1082" y="264">成功 / 失败</text>
+    <text class="step-text" x="1082" y="284">恢复文件策略</text>
+  </g>
+
+  <rect x="128" y="374" width="1024" height="70" rx="16" fill="#ffffff" stroke="#e2e8f0"/>
+  <text class="note" x="158" y="402">页面查询任务详情或日志分页时，从数据库汇总任务主表和节点实例状态；失败、超时、预检查失败的节点实例可以重试。</text>
+  <text class="note" x="158" y="426">如果 persistOnRestart=Y，节点会把 class/xml 和 .meta 写入本地 hot-reload 目录，服务重启后自动恢复。</text>
+</svg>

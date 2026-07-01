@@ -1,0 +1,221 @@
+### 集群热重载接口示例
+### 使用说明：
+### 1. 先启动 MySQL、Redis 和本 demo 服务。
+### 2. 重载后测试文件放在 src/main/java/io/github/hotreload/demo/test/reload-after。
+### 3. 调用 discover 后，再调用 nodes，把返回的真实节点 IP 填到 targetIp。
+### 4. create 接口没有返回 taskId，可通过日志分页接口或数据库拿到 taskId 后填入下面变量。
+
+@baseUrl = http://localhost:8080
+@appName = arthas-cluster-hot-reload-demo
+@targetIp = 198.18.0.1
+@taskId = STOP-20260701135904-2899e9d1
+
+### 1. 查询可热重载应用列表
+POST {{baseUrl}}/hotReloadCluster/apps
+Accept: application/json
+
+
+### 2. 刷新目标应用节点信息
+POST {{baseUrl}}/hotReloadCluster/discover?appName={{appName}}
+Accept: application/json
+
+
+### 3. 查询目标应用节点列表
+POST {{baseUrl}}/hotReloadCluster/nodes?appName={{appName}}
+Accept: application/json
+
+
+### 4. 查询当前节点信息
+POST {{baseUrl}}/hotReloadCluster/currentNode
+Accept: application/json
+
+
+### 5. 创建集群热重载任务：自动识别 Spring Bean class
+POST {{baseUrl}}/hotReloadCluster/task/create
+Content-Type: multipart/form-data; boundary=WebAppBoundary
+Accept: application/json
+
+--WebAppBoundary
+Content-Disposition: form-data; name="file"; filename="TestHotReloadServiceImpl.class"
+Content-Type: application/octet-stream
+
+< ../src/main/java/io/github/hotreload/demo/test/reload-after/TestHotReloadServiceImpl.class
+--WebAppBoundary
+Content-Disposition: form-data; name="request"
+Content-Type: application/json
+
+{
+  "appName": "{{appName}}",
+  "reloadType": "AUTO",
+  "persistOnRestart": "N",
+  "ips": [
+    "{{targetIp}}"
+  ],
+  "taskRemark": "演示集群热重载 Spring Bean class"
+}
+--WebAppBoundary--
+
+
+### 6. 创建集群热重载任务：指定普通 class
+POST {{baseUrl}}/hotReloadCluster/task/create
+Content-Type: multipart/form-data; boundary=WebAppBoundary
+Accept: application/json
+
+--WebAppBoundary
+Content-Disposition: form-data; name="file"; filename="TestHotReloadUtil.class"
+Content-Type: application/octet-stream
+
+< ../src/main/java/io/github/hotreload/demo/test/reload-after/TestHotReloadUtil.class
+--WebAppBoundary
+Content-Disposition: form-data; name="request"
+Content-Type: application/json
+
+{
+  "appName": "{{appName}}",
+  "reloadType": "COMMON_CLASS",
+  "persistOnRestart": "Y",
+  "ips": [
+    "{{targetIp}}"
+  ],
+  "taskRemark": "演示集群热重载普通工具类"
+}
+--WebAppBoundary--
+
+
+### 7. 创建集群热重载任务：指定 MyBatis Mapper XML
+POST {{baseUrl}}/hotReloadCluster/task/create
+Content-Type: multipart/form-data; boundary=WebAppBoundary
+Accept: application/json
+
+--WebAppBoundary
+Content-Disposition: form-data; name="file"; filename="TestHotReloadMapper.xml"
+Content-Type: application/xml
+
+< ../src/main/java/io/github/hotreload/demo/test/reload-after/TestHotReloadMapper.xml
+--WebAppBoundary
+Content-Disposition: form-data; name="request"
+Content-Type: application/json
+
+{
+  "appName": "{{appName}}",
+  "reloadType": "MYBATIS_XML",
+  "persistOnRestart": "Y",
+  "ips": [
+    "{{targetIp}}"
+  ],
+  "taskRemark": "演示集群热重载 MyBatis Mapper XML"
+}
+--WebAppBoundary--
+
+
+### 8. 创建集群热重载任务：重启后保持本次热重载
+POST {{baseUrl}}/hotReloadCluster/task/create
+Content-Type: multipart/form-data; boundary=WebAppBoundary
+Accept: application/json
+
+--WebAppBoundary
+Content-Disposition: form-data; name="file"; filename="TestHotReloadServiceImpl.class"
+Content-Type: application/octet-stream
+
+< ../src/main/java/io/github/hotreload/demo/test/reload-after/TestHotReloadServiceImpl.class
+--WebAppBoundary
+Content-Disposition: form-data; name="request"
+Content-Type: application/json
+
+{
+  "appName": "{{appName}}",
+  "reloadType": "SPRING_BEAN",
+  "persistOnRestart": "Y",
+  "beanName": "testHotReloadServiceImpl",
+  "ips": [
+    "{{targetIp}}"
+  ],
+  "taskRemark": "演示集群热重载并保存重启恢复文件"
+}
+--WebAppBoundary--
+
+
+### 9. 查询热重载相关任务详情
+POST {{baseUrl}}/hotReloadCluster/task/get
+Content-Type: application/json
+Accept: application/json
+
+{
+  "taskId": "{{taskId}}"
+}
+
+
+### 10. 分页查询热重载相关任务日志
+POST {{baseUrl}}/hotReloadCluster/task/log/page
+Content-Type: application/json
+Accept: application/json
+
+{
+  "pageStart": 1,
+  "pageNums": 10,
+  "requestVo": {
+    "appName": "{{appName}}",
+    "env": "local",
+    "reloadType": ""
+  }
+}
+
+
+### 11. 按节点实例状态查询失败日志
+POST {{baseUrl}}/hotReloadCluster/task/log/page
+Content-Type: application/json
+Accept: application/json
+
+{
+  "pageStart": 1,
+  "pageNums": 10,
+  "requestVo": {
+    "appName": "{{appName}}",
+    "ip": "{{targetIp}}",
+    "instanceStatus": "FAILED",
+    "executeType": "NORMAL"
+  }
+}
+
+
+### 12. 重试失败节点
+POST {{baseUrl}}/hotReloadCluster/task/retry
+Content-Type: application/json
+Accept: application/json
+
+{
+  "taskId": "{{taskId}}",
+  "ips": [
+    "{{targetIp}}"
+  ]
+}
+
+
+### 13. 停止目标节点的重启自动恢复（*全部热重载内容）
+POST {{baseUrl}}/hotReloadCluster/restartRecovery/stop
+Content-Type: application/json
+Accept: application/json
+
+{
+  "appName": "{{appName}}",
+  "fileType": "*",
+  "ips": [
+    "{{targetIp}}"
+  ],
+  "taskRemark": "演示停止全部热重载内容的重启自动恢复"
+}
+
+
+### 14. 停止目标节点 Spring Bean 热重载内容的重启自动恢复
+POST {{baseUrl}}/hotReloadCluster/restartRecovery/stop
+Content-Type: application/json
+Accept: application/json
+
+{
+  "appName": "{{appName}}",
+  "fileType": "SPRING_BEAN",
+  "ips": [
+    "{{targetIp}}"
+  ],
+  "taskRemark": "演示只停止 Spring Bean 热重载内容的重启自动恢复"
+}

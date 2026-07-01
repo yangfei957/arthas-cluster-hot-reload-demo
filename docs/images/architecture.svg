@@ -1,0 +1,121 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="760" viewBox="0 0 1280 760" role="img" aria-labelledby="title desc">
+  <title id="title">Arthas 集群热重载整体架构</title>
+  <desc id="desc">展示操作入口、控制面、状态与消息、目标服务集群和节点本地执行之间的关系。</desc>
+  <defs>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#0f172a" flood-opacity="0.10"/>
+    </filter>
+    <marker id="arrow-blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#2563eb"/>
+    </marker>
+    <marker id="arrow-orange" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#f97316"/>
+    </marker>
+    <marker id="arrow-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#059669"/>
+    </marker>
+    <style>
+      .bg { fill:#f8fafc; }
+      .title { fill:#0f172a; font:700 30px "Inter","Segoe UI","Microsoft YaHei",sans-serif; }
+      .subtitle { fill:#475569; font:400 15px "Inter","Segoe UI","Microsoft YaHei",sans-serif; }
+      .card-title { fill:#0f172a; font:700 18px "Inter","Segoe UI","Microsoft YaHei",sans-serif; }
+      .card-sub { fill:#64748b; font:400 12px "Inter","Segoe UI","Microsoft YaHei",sans-serif; }
+      .item-title { fill:#0f172a; font:700 14px "Inter","Segoe UI","Microsoft YaHei",sans-serif; }
+      .item-text { fill:#475569; font:400 12px "Inter","Segoe UI","Microsoft YaHei",sans-serif; }
+      .line-blue { stroke:#2563eb; stroke-width:2.2; fill:none; marker-end:url(#arrow-blue); }
+      .line-orange { stroke:#f97316; stroke-width:2.2; fill:none; marker-end:url(#arrow-orange); }
+      .line-green { stroke:#059669; stroke-width:2.2; fill:none; marker-end:url(#arrow-green); }
+      .label { fill:#334155; font:600 12px "Inter","Segoe UI","Microsoft YaHei",sans-serif; }
+    </style>
+  </defs>
+
+  <rect class="bg" x="0" y="0" width="1280" height="760" rx="28"/>
+  <text class="title" x="52" y="58">Arthas 集群热重载整体架构</text>
+  <text class="subtitle" x="52" y="86">Redis 负责广播通知，数据库保存任务和节点实例日志，目标节点在本机执行 Arthas / MyBatis 热重载。</text>
+
+  <g filter="url(#shadow)">
+    <rect x="46" y="126" width="240" height="220" rx="18" fill="#eff6ff" stroke="#bfdbfe"/>
+    <text class="card-title" x="70" y="162">操作入口</text>
+    <text class="card-sub" x="70" y="184">页面、HTTP Client、验证接口</text>
+    <rect x="70" y="210" width="192" height="52" rx="12" fill="#ffffff" stroke="#bfdbfe"/>
+    <text class="item-title" x="88" y="232">管理页面 / HTTP</text>
+    <text class="item-text" x="88" y="252">选择服务、节点、补丁文件</text>
+    <rect x="70" y="276" width="192" height="44" rx="12" fill="#ffffff" stroke="#bfdbfe"/>
+    <text class="item-title" x="88" y="302">/testHotReload/*</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="360" y="126" width="270" height="220" rx="18" fill="#f8fafc" stroke="#cbd5e1"/>
+    <text class="card-title" x="384" y="162">控制面</text>
+    <text class="card-sub" x="384" y="184">创建任务、校验参数、广播消息</text>
+    <rect x="384" y="210" width="222" height="52" rx="12" fill="#ffffff" stroke="#cbd5e1"/>
+    <text class="item-title" x="402" y="232">HotReloadClusterController</text>
+    <text class="item-text" x="402" y="252">discover / nodes / task</text>
+    <rect x="384" y="276" width="222" height="44" rx="12" fill="#ffffff" stroke="#cbd5e1"/>
+    <text class="item-title" x="402" y="302">HotReloadClusterService</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="720" y="126" width="270" height="220" rx="18" fill="#fff7ed" stroke="#fed7aa"/>
+    <text class="card-title" x="744" y="162">状态与消息</text>
+    <text class="card-sub" x="744" y="184">广播通知和任务日志</text>
+    <rect x="744" y="210" width="222" height="52" rx="12" fill="#ffffff" stroke="#fed7aa"/>
+    <text class="item-title" x="762" y="232">Redis Topic</text>
+    <text class="item-text" x="762" y="252">DISCOVER / RELOAD / STOP</text>
+    <rect x="744" y="276" width="222" height="44" rx="12" fill="#ffffff" stroke="#fed7aa"/>
+    <text class="item-title" x="762" y="302">关系型数据库</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="1040" y="126" width="194" height="220" rx="18" fill="#fefce8" stroke="#fde68a"/>
+    <text class="card-title" x="1064" y="162">配置与安全</text>
+    <text class="card-sub" x="1064" y="184">开关、服务列表、密钥</text>
+    <rect x="1064" y="210" width="146" height="44" rx="12" fill="#ffffff" stroke="#fde68a"/>
+    <text class="item-title" x="1082" y="236">RELOAD_CONFIG</text>
+    <rect x="1064" y="270" width="146" height="44" rx="12" fill="#ffffff" stroke="#fde68a"/>
+    <text class="item-title" x="1082" y="296">secret-key</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="178" y="452" width="430" height="220" rx="18" fill="#ecfdf5" stroke="#bbf7d0"/>
+    <text class="card-title" x="202" y="488">目标服务集群</text>
+    <text class="card-sub" x="202" y="510">每个节点使用 appName + env + ip 判断是否执行</text>
+    <rect x="202" y="538" width="112" height="72" rx="14" fill="#ffffff" stroke="#bbf7d0"/>
+    <text class="item-title" x="230" y="565">节点 A</text>
+    <text class="item-text" x="220" y="588">Pod IP</text>
+    <rect x="336" y="538" width="112" height="72" rx="14" fill="#ffffff" stroke="#bbf7d0"/>
+    <text class="item-title" x="364" y="565">节点 B</text>
+    <text class="item-text" x="354" y="588">Pod IP</text>
+    <rect x="470" y="538" width="112" height="72" rx="14" fill="#ffffff" stroke="#bbf7d0"/>
+    <text class="item-title" x="498" y="565">节点 N</text>
+    <text class="item-text" x="488" y="588">Pod IP</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="704" y="452" width="430" height="220" rx="18" fill="#f5f3ff" stroke="#ddd6fe"/>
+    <text class="card-title" x="728" y="488">节点本地执行</text>
+    <text class="card-sub" x="728" y="510">热重载、MyBatis 刷新和重启恢复</text>
+    <rect x="728" y="538" width="120" height="72" rx="14" fill="#ffffff" stroke="#ddd6fe"/>
+    <text class="item-title" x="754" y="565">Arthas</text>
+    <text class="item-text" x="744" y="588">class reload</text>
+    <rect x="870" y="538" width="120" height="72" rx="14" fill="#ffffff" stroke="#ddd6fe"/>
+    <text class="item-title" x="894" y="565">MyBatis</text>
+    <text class="item-text" x="890" y="588">XML refresh</text>
+    <rect x="1012" y="538" width="98" height="72" rx="14" fill="#ffffff" stroke="#ddd6fe"/>
+    <text class="item-title" x="1028" y="565">恢复目录</text>
+    <text class="item-text" x="1028" y="588">hot-reload</text>
+  </g>
+
+  <path class="line-blue" d="M286 236 C320 236 326 236 360 236"/>
+  <text class="label" x="308" y="224">发起操作</text>
+  <path class="line-blue" d="M630 236 C666 236 684 236 720 236"/>
+  <text class="label" x="654" y="224">写库 / 广播</text>
+  <path class="line-orange" d="M855 346 C855 382 660 410 494 452"/>
+  <text class="label" x="660" y="406">节点收到通知</text>
+  <path class="line-green" d="M608 562 C650 562 662 562 704 562"/>
+  <text class="label" x="625" y="548">本机执行</text>
+  <path class="line-orange" d="M392 452 C392 410 770 386 855 346"/>
+  <text class="label" x="480" y="414">拉任务 / 写结果</text>
+  <path class="line-blue" d="M990 236 C1018 236 1012 236 1040 236"/>
+  <text class="label" x="1000" y="224">读取配置</text>
+</svg>

@@ -1,0 +1,9 @@
+spring:
+  datasource:
+    driver-class-name: oracle.jdbc.OracleDriver
+    url: jdbc:oracle:thin:@//127.0.0.1:1521/XEPDB1
+    username: hot_reload_demo
+    password: root
+
+hot-reload:
+  database-type: ORACLE_12C

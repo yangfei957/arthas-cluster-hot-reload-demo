@@ -1,0 +1,26 @@
+### 热重载验证接口示例
+### 使用说明：
+### 1. 启动 demo 服务后先调用这些接口记录热重载前返回值。
+### 2. 上传并执行对应 class/xml 热重载任务。
+### 3. 再次调用这些接口，观察返回值是否变更。
+
+@baseUrl = http://localhost:8080
+
+### 1. 验证 Spring Bean 热重载结果
+POST {{baseUrl}}/testHotReload/springBean?userId=1001
+Accept: text/plain
+
+
+### 2. 验证普通 class 热重载结果：原始代码只判断 null，传空字符串会返回 false
+POST {{baseUrl}}/testHotReload/commonClass?value=
+Accept: application/json
+
+
+### 3. 验证 MyBatis XML 热重载结果
+POST {{baseUrl}}/testHotReload/myBatisXml
+Accept: application/json
+
+
+### 4. 一次性验证全部测试对象
+POST {{baseUrl}}/testHotReload/all?userId=1001&value=
+Accept: application/json

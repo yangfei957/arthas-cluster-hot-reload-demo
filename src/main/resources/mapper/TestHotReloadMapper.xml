@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="io.github.hotreload.demo.test.TestHotReloadMapper">
+
+    <select id="selectDemoResult" databaseId="mysql" resultType="java.util.Map">
+        SELECT
+            '原始SQL（热重载前）mapper-hot-reload-before' AS reload_marker,
+            NOW() AS query_time
+    </select>
+
+    <select id="selectDemoResult" databaseId="postgresql" resultType="java.util.Map">
+        SELECT
+            '原始SQL（热重载前）mapper-hot-reload-before' AS reload_marker,
+            CURRENT_TIMESTAMP AS query_time
+    </select>
+
+    <select id="selectDemoResult" databaseId="oracle" resultType="java.util.Map">
+        SELECT
+            '原始SQL（热重载前）mapper-hot-reload-before' AS reload_marker,
+            SYSTIMESTAMP AS query_time
+        FROM DUAL
+    </select>
+
+    <select id="selectDemoResult" databaseId="sqlserver" resultType="java.util.Map">
+        SELECT
+            '原始SQL（热重载前）mapper-hot-reload-before' AS reload_marker,
+            SYSDATETIME() AS query_time
+    </select>
+</mapper>
