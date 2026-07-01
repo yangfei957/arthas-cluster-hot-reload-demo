@@ -1,4 +1,4 @@
-# arthas-cluster-hot-reload-demo
+<h1 align="center">arthas-cluster-hot-reload-demo</h1>
 
 <p align="center">
   <strong>Cluster hot reload demo based on Arthas, Redis broadcast, and database execution logs</strong>
