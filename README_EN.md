@@ -22,9 +22,8 @@ It demonstrates how to send a `.class` file or a MyBatis Mapper XML file to one 
 
 ## Branches
 
-- `master`: current branch, with class reload based on Byte Buddy Agent and JVM Instrumentation.
+- `main`: default branch, with class reload based on Byte Buddy Agent and JVM Instrumentation.
 - `arthas`: complete class reload implementation based on the Arthas HTTP API.
-- `main`: release line for the Arthas implementation.
 
 ## Features
 

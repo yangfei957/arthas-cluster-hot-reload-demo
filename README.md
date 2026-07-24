@@ -22,9 +22,8 @@
 
 ## 分支说明
 
-- `master`：当前分支，使用 Byte Buddy Agent 和 JVM Instrumentation 执行 class 热重载。
+- `main`：默认分支，使用 Byte Buddy Agent 和 JVM Instrumentation 执行 class 热重载。
 - `arthas`：保留 Arthas HTTP API 执行 class 热重载的完整实现。
-- `main`：Arthas 版本发布主线。
 
 ## 能力速览
 
