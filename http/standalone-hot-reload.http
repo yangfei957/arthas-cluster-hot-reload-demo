@@ -1,6 +1,6 @@
 ### 单机热重载接口示例
 ### 使用说明：
-### 1. 先启动 demo 服务，并确认 Arthas HTTP 端口可用。
+### 1. 先启动 demo 服务，并确认日志显示 Byte Buddy Agent 已安装。
 ### 2. 重载后测试文件放在 src/main/java/io/github/hotreload/demo/test/reload-after。
 ### 3. 单机上传接口需要请求头 hot-reload-secret，默认值见 application.yml。
 
@@ -49,31 +49,7 @@ Content-Type: application/xml
 --WebAppBoundary--
 
 
-### 4. 调用 Arthas version 命令
-POST {{baseUrl}}/standaloneHotReload/hot-reload/command
-Content-Type: application/json
+### 4. 查看 Byte Buddy Agent 状态
+POST {{baseUrl}}/standaloneHotReload/hot-reload/agent/status
+hot-reload-secret: {{secretKey}}
 Accept: text/plain
-
-{
-  "command": "version"
-}
-
-
-### 5. 调用 Arthas jad 命令查看测试类
-POST {{baseUrl}}/standaloneHotReload/hot-reload/command
-Content-Type: application/json
-Accept: text/plain
-
-{
-  "command": "jad io.github.hotreload.demo.test.TestHotReloadServiceImpl"
-}
-
-
-### 6. 调用 Arthas sc 命令查看类加载信息
-POST {{baseUrl}}/standaloneHotReload/hot-reload/command
-Content-Type: application/json
-Accept: text/plain
-
-{
-  "command": "sc -d io.github.hotreload.demo.test.TestHotReloadServiceImpl"
-}

@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component;
 /**
  * 热重载配置属性。
  * <p>
- * 配置项来自 application.yml 的 hot-reload 前缀，用于控制 Redis 主题、单机接口密钥、Arthas 启动等待时间和数据库方言。
+ * 配置项来自 application.yml 的 hot-reload 前缀，用于控制 Redis 主题、单机接口密钥和数据库方言。
  */
 @Component
 @ConfigurationProperties(prefix = "hot-reload")
@@ -21,11 +21,6 @@ public class HotReloadProperties {
      * 单机测试接口使用的简单密钥。
      */
     private String secretKey = "demo-hot-reload";
-
-    /**
-     * 服务启动后等待 Arthas 初始化的时间。
-     */
-    private long arthasInitWaitMs = 5000L;
 
     /**
      * MyBatis-Plus 分页插件使用的数据库类型。
@@ -66,24 +61,6 @@ public class HotReloadProperties {
      */
     public void setSecretKey(String secretKey) {
         this.secretKey = secretKey;
-    }
-
-    /**
-     * 获取服务启动后等待 Arthas 初始化的时间。
-     *
-     * @return 等待时间，单位毫秒
-     */
-    public long getArthasInitWaitMs() {
-        return arthasInitWaitMs;
-    }
-
-    /**
-     * 设置服务启动后等待 Arthas 初始化的时间。
-     *
-     * @param arthasInitWaitMs 等待时间，单位毫秒
-     */
-    public void setArthasInitWaitMs(long arthasInitWaitMs) {
-        this.arthasInitWaitMs = arthasInitWaitMs;
     }
 
     /**

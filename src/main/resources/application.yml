@@ -30,13 +30,7 @@ mybatis-plus:
   configuration:
     map-underscore-to-camel-case: true
 
-arthas:
-  ip: 127.0.0.1
-  http-port: 8563
-  output-path: ${java.io.tmpdir}/arthas-output/${spring.application.name}
-
 hot-reload:
   redis-topic: HOT_RELOAD_TOPIC
   secret-key: demo-hot-reload
-  arthas-init-wait-ms: 5000
   database-type: MYSQL

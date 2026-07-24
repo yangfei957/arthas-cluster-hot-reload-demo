@@ -61,7 +61,7 @@
     <circle cx="838" cy="194" r="18" fill="#7c3aed"/>
     <text class="num" x="833" y="199">4</text>
     <text class="step-title" x="830" y="236">Target Execute</text>
-    <text class="step-text" x="830" y="264">Arthas</text>
+    <text class="step-text" x="830" y="264">Byte Buddy</text>
     <text class="step-text" x="830" y="284">MyBatis</text>
   </g>
 

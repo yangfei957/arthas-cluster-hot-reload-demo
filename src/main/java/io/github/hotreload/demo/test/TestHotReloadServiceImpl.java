@@ -5,7 +5,7 @@ import org.springframework.stereotype.Service;
 /**
  * Service 实现类热重载测试实现。
  * <p>
- * 该类由 Spring 容器管理，适合验证 Service 方法体修改后的 Arthas retransform 效果。
+ * 该类由 Spring 容器管理，适合验证 Service 方法体修改后的 Byte Buddy Agent redefine 效果。
  */
 @Service
 public class TestHotReloadServiceImpl implements TestHotReloadService {

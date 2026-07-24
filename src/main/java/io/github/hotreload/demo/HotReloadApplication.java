@@ -5,9 +5,9 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 /**
- * Arthas 集群热重载 Demo 启动类。
+ * Byte Buddy Agent 集群热重载 Demo 启动类。
  * <p>
- * 启动后会初始化 Spring Boot、Redis 监听、MyBatis 和 Arthas starter，用于演示单机与集群热重载流程。
+ * 启动后会初始化 Spring Boot、Redis 监听、MyBatis 和 Byte Buddy Agent，用于演示单机与集群热重载流程。
  */
 @Slf4j
 @SpringBootApplication

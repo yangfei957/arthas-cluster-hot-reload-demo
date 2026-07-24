@@ -3,7 +3,7 @@ package io.github.hotreload.demo.controller;
 import io.github.hotreload.demo.config.reload.HotReloadAccessGuard;
 import io.github.hotreload.demo.core.cluster.HotReloadConstants;
 import io.github.hotreload.demo.core.recovery.HotReloadRecoveryFileStore;
-import io.github.hotreload.demo.core.runtime.ArthasClassReloadExecutor;
+import io.github.hotreload.demo.core.runtime.ByteBuddyClassReloadExecutor;
 import io.github.hotreload.demo.core.runtime.HotReloadRuntimeExecutor;
 import io.github.hotreload.demo.util.HotReloadUtils;
 import io.swagger.annotations.Api;
@@ -12,7 +12,6 @@ import io.swagger.annotations.ApiParam;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -20,12 +19,11 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.InputStream;
-import java.util.Map;
 
 /**
  * 单机热重载示例接口。
  * <p>
- * 该控制器不依赖 Redis 广播和数据库任务表，适合学习 Arthas 热重载的最小调用链。
+ * 该控制器不依赖 Redis 广播和数据库任务表，适合学习 Byte Buddy Agent 热重载的最小调用链。
  */
 @Slf4j
 @Api(tags = "单机热重载")
@@ -35,7 +33,7 @@ public class StandaloneHotReloadController {
 
     private final HotReloadRuntimeExecutor hotReloadRuntimeExecutor;
     private final HotReloadAccessGuard hotReloadAccessGuard;
-    private final ArthasClassReloadExecutor arthasClassReloadExecutor;
+    private final ByteBuddyClassReloadExecutor byteBuddyClassReloadExecutor;
     private final HotReloadRecoveryFileStore recoverFileStore;
 
     /**
@@ -43,16 +41,16 @@ public class StandaloneHotReloadController {
      *
      * @param hotReloadRuntimeExecutor 运行时热重载执行器
      * @param hotReloadAccessGuard     简单密钥访问校验器
-     * @param arthasClassReloadExecutor Arthas 命令执行器
+     * @param byteBuddyClassReloadExecutor Byte Buddy Agent 执行器
      * @param recoverFileStore         恢复文件存储组件
      */
     public StandaloneHotReloadController(HotReloadRuntimeExecutor hotReloadRuntimeExecutor,
                                          HotReloadAccessGuard hotReloadAccessGuard,
-                                         ArthasClassReloadExecutor arthasClassReloadExecutor,
+                                         ByteBuddyClassReloadExecutor byteBuddyClassReloadExecutor,
                                          HotReloadRecoveryFileStore recoverFileStore) {
         this.hotReloadRuntimeExecutor = hotReloadRuntimeExecutor;
         this.hotReloadAccessGuard = hotReloadAccessGuard;
-        this.arthasClassReloadExecutor = arthasClassReloadExecutor;
+        this.byteBuddyClassReloadExecutor = byteBuddyClassReloadExecutor;
         this.recoverFileStore = recoverFileStore;
     }
 
@@ -90,20 +88,18 @@ public class StandaloneHotReloadController {
     }
 
     /**
-     * 直接调用 Arthas HTTP API 执行命令。
+     * 查询 Byte Buddy Agent 和 JVM class 重定义能力状态。
      *
-     * @param commandMap 命令请求，command 字段保存 Arthas 命令文本
-     * @return Arthas 返回结果
-     * @throws Exception Arthas 调用失败时抛出
+     * @param request HTTP 请求，Header 中需要携带热重载密钥
+     * @return Agent 状态摘要
      */
-    @ApiOperation("调用 Arthas 命令")
-    @PostMapping("/hot-reload/command")
-    public String callCommand(@RequestBody Map<String, String> commandMap) throws Exception {
-        String command = commandMap.get("command");
-        if (StringUtils.isBlank(command)) {
-            throw new IllegalArgumentException("命令参数 command 不能为空");
+    @ApiOperation("查看 Byte Buddy Agent 状态")
+    @PostMapping("/hot-reload/agent/status")
+    public String agentStatus(HttpServletRequest request) {
+        if (!hotReloadAccessGuard.check(request)) {
+            return "密钥错误";
         }
-        return arthasClassReloadExecutor.callArthasApi(command);
+        return byteBuddyClassReloadExecutor.getStatus();
     }
 
     /**

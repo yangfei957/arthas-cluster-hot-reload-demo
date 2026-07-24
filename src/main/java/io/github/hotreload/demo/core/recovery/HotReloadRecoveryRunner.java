@@ -1,12 +1,10 @@
 package io.github.hotreload.demo.core.recovery;
 
-import io.github.hotreload.demo.config.reload.HotReloadProperties;
+import io.github.hotreload.demo.core.cluster.HotReloadConstants;
+import io.github.hotreload.demo.core.cluster.HotReloadLocalNode;
+import io.github.hotreload.demo.core.runtime.HotReloadRuntimeExecutor;
 import io.github.hotreload.demo.entity.HotReloadTaskInstanceEntity;
 import io.github.hotreload.demo.mapper.HotReloadTaskInstanceMapper;
-import io.github.hotreload.demo.core.cluster.HotReloadLocalNode;
-import io.github.hotreload.demo.core.runtime.ArthasClassReloadExecutor;
-import io.github.hotreload.demo.core.runtime.HotReloadRuntimeExecutor;
-import io.github.hotreload.demo.core.cluster.HotReloadConstants;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.ApplicationContext;
@@ -26,17 +24,12 @@ import java.util.UUID;
  * 热重载重启恢复运行器。
  * <p>
  * 服务启动完成后，该组件会读取本地恢复目录中的 class/xml 文件，
- * 等待 Arthas 就绪后重新执行热重载，并把恢复执行结果写入任务实例表。
+ * 直接重新执行热重载，并把恢复执行结果写入任务实例表。
  */
 @Slf4j
 @Component
 public class HotReloadRecoveryRunner implements ApplicationContextAware {
 
-    private static final int ARTHAS_WAIT_MAX_RETRY = 10;
-    private static final long ARTHAS_WAIT_INTERVAL_MS = 3000L;
-
-    private final HotReloadProperties hotReloadProperties;
-    private final ArthasClassReloadExecutor arthasClassReloadExecutor;
     private final HotReloadRuntimeExecutor hotReloadRuntimeExecutor;
     private final HotReloadRecoveryFileStore recoverFileStore;
     private final HotReloadTaskInstanceMapper hotReloadTaskInstanceMapper;
@@ -47,21 +40,15 @@ public class HotReloadRecoveryRunner implements ApplicationContextAware {
     /**
      * 构造热重载重启恢复运行器。
      *
-     * @param hotReloadProperties        热重载配置
-     * @param arthasClassReloadExecutor  Arthas class 重载执行器
      * @param hotReloadRuntimeExecutor   本机热重载运行时执行器
      * @param recoverFileStore           恢复文件存储组件
      * @param hotReloadTaskInstanceMapper 任务实例 Mapper
      * @param localNode                  当前节点信息
      */
-    public HotReloadRecoveryRunner(HotReloadProperties hotReloadProperties,
-                                    ArthasClassReloadExecutor arthasClassReloadExecutor,
-                                    HotReloadRuntimeExecutor hotReloadRuntimeExecutor,
+    public HotReloadRecoveryRunner(HotReloadRuntimeExecutor hotReloadRuntimeExecutor,
                                     HotReloadRecoveryFileStore recoverFileStore,
                                     HotReloadTaskInstanceMapper hotReloadTaskInstanceMapper,
                                     HotReloadLocalNode localNode) {
-        this.hotReloadProperties = hotReloadProperties;
-        this.arthasClassReloadExecutor = arthasClassReloadExecutor;
         this.hotReloadRuntimeExecutor = hotReloadRuntimeExecutor;
         this.recoverFileStore = recoverFileStore;
         this.hotReloadTaskInstanceMapper = hotReloadTaskInstanceMapper;
@@ -104,7 +91,6 @@ public class HotReloadRecoveryRunner implements ApplicationContextAware {
                 log.info("未发现热重载恢复文件");
                 return;
             }
-            waitForArthas();
             log.info("本地检测到恢复文件，热重载自动恢复开始运行");
             recoverClasses(classFiles);
             recoverMyBatisXml(myBatisXmlFiles);
@@ -112,24 +98,6 @@ public class HotReloadRecoveryRunner implements ApplicationContextAware {
         } catch (Exception e) {
             log.error("热重载自动恢复失败", e);
         }
-    }
-
-    /**
-     * 等待 Arthas HTTP API 可用。
-     *
-     * @throws Exception Arthas 长时间未就绪时抛出
-     */
-    private void waitForArthas() throws Exception {
-        Thread.sleep(hotReloadProperties.getArthasInitWaitMs());
-        for (int i = 1; i <= ARTHAS_WAIT_MAX_RETRY; i++) {
-            if (arthasClassReloadExecutor.isReady()) {
-                log.info("Arthas 已就绪");
-                return;
-            }
-            log.info("等待 Arthas 就绪，{}/{}", i, ARTHAS_WAIT_MAX_RETRY);
-            Thread.sleep(ARTHAS_WAIT_INTERVAL_MS);
-        }
-        throw new RuntimeException("Arthas 等待超时，放弃热重载恢复");
     }
 
     /**

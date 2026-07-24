@@ -40,8 +40,8 @@ public class SwaggerConfig {
      */
     private ApiInfo apiInfo() {
         return new ApiInfoBuilder()
-                .title("Arthas Cluster Hot Reload Demo")
-                .description("基于 Arthas、Redis 广播和数据库执行日志的集群热重载示例接口")
+                .title("Byte Buddy Agent Cluster Hot Reload Demo")
+                .description("基于 Byte Buddy Agent、Redis 广播和数据库执行日志的集群热重载示例接口")
                 .version("0.1.0")
                 .build();
     }

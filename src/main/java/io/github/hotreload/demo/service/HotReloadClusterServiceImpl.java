@@ -49,7 +49,7 @@ import java.util.stream.Collectors;
 /**
  * 集群热重载业务实现。
  * <p>
- * 该类负责把页面请求转成数据库任务和 Redis 广播，并在节点收到通知后执行本机 Arthas/MyBatis 热重载。
+ * 该类负责把页面请求转成数据库任务和 Redis 广播，并在节点收到通知后执行本机 Byte Buddy Agent/MyBatis 热重载。
  */
 @Slf4j
 @Service

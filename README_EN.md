@@ -1,13 +1,13 @@
 <h1 align="center">arthas-cluster-hot-reload-demo</h1>
 
 <p align="center">
-  <strong>Cluster hot reload demo based on Arthas, Redis broadcast, and database execution logs</strong>
+  <strong>Cluster hot reload demo based on Byte Buddy Agent, Redis broadcast, and database execution logs</strong>
 </p>
 
 <p align="center">
   <img alt="Java 8+ / JDK 17 verified" src="https://img.shields.io/badge/Java-8%2B%20%7C%20JDK17%20verified-007396?style=flat-square">
   <img alt="Spring Boot 2.7.13" src="https://img.shields.io/badge/Spring%20Boot-2.7.13-6DB33F?style=flat-square">
-  <img alt="Arthas 3.7.2" src="https://img.shields.io/badge/Arthas-3.7.2-1677ff?style=flat-square">
+  <img alt="Byte Buddy Agent 1.18.8" src="https://img.shields.io/badge/Byte%20Buddy%20Agent-1.18.8-7C3AED?style=flat-square">
   <img alt="Redis PubSub" src="https://img.shields.io/badge/Redis-PubSub-DC382D?style=flat-square">
   <img alt="Multi Database" src="https://img.shields.io/badge/Database-MySQL%20%7C%20PostgreSQL%20%7C%20Oracle%20%7C%20SQL%20Server-4B5563?style=flat-square">
 </p>
@@ -16,15 +16,15 @@
   <a href="README.md">中文</a> | <a href="README_EN.md">English</a>
 </p>
 
-This is a Spring Boot cluster hot reload demo built with Arthas, Redis Pub/Sub, and relational database execution logs.
+This is a Spring Boot cluster hot reload demo built with Byte Buddy Agent, Redis Pub/Sub, and relational database execution logs.
 
 It demonstrates how to send a `.class` file or a MyBatis Mapper XML file to one or more Spring Boot service instances, reload it locally on each selected node without restarting the service, and write every task and node-level execution result back to the database.
 
 ## Branches
 
-- `main`: release line for the Arthas implementation.
+- `master`: current branch, with class reload based on Byte Buddy Agent and JVM Instrumentation.
 - `arthas`: complete class reload implementation based on the Arthas HTTP API.
-- `master`: class reload implementation based on Byte Buddy Agent and JVM Instrumentation.
+- `main`: release line for the Arthas implementation.
 
 ## Features
 
@@ -41,7 +41,7 @@ It demonstrates how to send a `.class` file or a MyBatis Mapper XML file to one 
 
 ## Background
 
-Hot reloading a class in a single JVM is straightforward: find the target JVM and use Arthas `retransform`, or refresh a MyBatis Mapper XML in memory.
+Hot reloading in a single JVM is straightforward: use Byte Buddy Agent to obtain JVM Instrumentation and redefine an already loaded class; refresh MyBatis Mapper XML directly in the active SqlSessionFactory configuration.
 
 In a service cluster, several extra problems appear:
 
@@ -58,12 +58,12 @@ This project provides a runnable reference workflow:
 3. The user selects target IPs and creates a hot reload task.
 4. The task, uploaded file, and node execution instances are stored in the database.
 5. Redis publishes the task notification.
-6. Target nodes pull task details and files from the database, then run Arthas or MyBatis reload locally.
+6. Target nodes pull task details and files from the database, then run Byte Buddy Agent class redefinition or MyBatis XML refresh locally.
 7. Each node writes the execution result back to the database. The UI queries task details or logs.
 
 ## What It Demonstrates
 
-- JVM class method-body hot reload through one `CLASS` type for both Spring-managed and plain Java classes.
+- JVM class method-body hot reload through Byte Buddy Agent and one `CLASS` type for both Spring-managed and plain Java classes.
 - MyBatis Mapper XML SQL hot reload.
 - Cluster node discovery and targeted node dispatch.
 - Node-level task instance status, retry, and log query.
@@ -76,7 +76,7 @@ This project is intended for learning and secondary development. It is not a pro
 
 - Java 8+, verified with JDK 17
 - Spring Boot 2.7.13
-- Arthas 3.7.2
+- Byte Buddy Agent 1.18.8
 - Redis Pub/Sub
 - MySQL, PostgreSQL, Oracle, SQL Server
 - MyBatis-Plus
@@ -85,7 +85,7 @@ This project is intended for learning and secondary development. It is not a pro
 ## Architecture
 
 <p align="center">
-  <img src="docs/images/architecture-en.svg" alt="Arthas cluster hot reload architecture" width="100%">
+  <img src="docs/images/architecture-en.svg" alt="Byte Buddy Agent cluster hot reload architecture" width="100%">
 </p>
 
 Core design:
@@ -93,6 +93,7 @@ Core design:
 - Redis only broadcasts notifications. It does not store full task content.
 - The database stores tasks, uploaded files, and node execution logs.
 - A node pulls task details and file content from the database after receiving a Redis message.
+- JVM classes are redefined through Byte Buddy Agent and Instrumentation; MyBatis XML is handled independently by the MyBatis configuration refresh logic.
 - A node decides whether to execute by comparing `appName + env + ip`.
 - Each node uses a local lock to avoid concurrent hot reload execution.
 - Node status is calculated from Redis registration `updateTime`; nodes older than 30 minutes are considered `EXPIRED`.
@@ -116,7 +117,7 @@ src/main/java/io/github/hotreload/demo
 │   ├── cluster      Node information and constants
 │   ├── message      Redis message objects
 │   ├── recovery     Restart recovery file store, runner, and cleanup
-│   └── runtime      Arthas class reload and MyBatis XML refresh
+│   └── runtime      Byte Buddy Agent class redefinition and MyBatis XML refresh
 ├── entity           Database table entities
 ├── mapper           MyBatis-Plus mappers
 ├── service          Cluster hot reload workflow
@@ -153,15 +154,9 @@ spring:
       connection-timeout: 5000
       initialization-fail-timeout: 1
 
-arthas:
-  ip: 127.0.0.1
-  http-port: 8563
-  output-path: ${java.io.tmpdir}/arthas-output/${spring.application.name}
-
 hot-reload:
   redis-topic: HOT_RELOAD_TOPIC
   secret-key: demo-hot-reload
-  arthas-init-wait-ms: 5000
 ```
 
 Notes:
@@ -170,7 +165,8 @@ Notes:
 - The first value in `spring.profiles.active` is used as `env`.
 - Node IP is resolved by `io.github.hotreload.demo.util.SystemUtils#getLocalIP()`. It is intended to get the current service instance Pod IP in container deployments. Real projects should replace it with a reliable instance IP strategy for their own network, sidecar, service mesh, and deployment model.
 - `spring.datasource.hikari.initialization-fail-timeout` makes startup fail if the database connection cannot be initialized.
-- `arthas.output-path` is the Arthas command output directory. Arthas always creates an output directory on startup. This demo moves it to the system temp directory to avoid creating `arthas-output` under the project root.
+- The application calls `ByteBuddyAgent.install()` during startup. Startup fails if Agent installation fails or the JVM does not support class redefinition.
+- Use a full JDK with Attach API enabled. In restricted containers or environments where dynamic Attach is disabled, preconfigure `-javaagent:/path/to/byte-buddy-agent-1.18.8.jar` in the JVM startup arguments.
 - `hot-reload.redis-topic` is the Redis broadcast topic.
 - `hot-reload.database-type` controls the MyBatis-Plus pagination dialect. The default is MySQL.
 - Standalone hot reload APIs use the `hot-reload-secret` request header as a simple protection mechanism.
@@ -337,7 +333,7 @@ Validation flow:
 
 ## Standalone Hot Reload
 
-Standalone APIs do not depend on Redis broadcast or database task tables. They are useful for validating Arthas and runtime reload capability first.
+Standalone APIs do not depend on Redis broadcast or database task tables. They are useful for validating Byte Buddy Agent and runtime reload capability first.
 
 Endpoint:
 
@@ -361,19 +357,14 @@ Example file:
 http/standalone-hot-reload.http
 ```
 
-Standalone API also exposes direct Arthas command execution:
+The standalone API also exposes Byte Buddy Agent status:
 
 ```text
-POST /standaloneHotReload/hot-reload/command
+POST /standaloneHotReload/hot-reload/agent/status
+hot-reload-secret: demo-hot-reload
 ```
 
-Example:
-
-```json
-{
-  "command": "jad io.github.hotreload.demo.test.TestHotReloadServiceImpl"
-}
-```
+The response reports whether the Agent is installed and whether the current JVM supports class redefine/retransform.
 
 ## Cluster Hot Reload
 
@@ -570,7 +561,7 @@ This API deletes target nodes' local zip recovery packages under the matching `h
 
 ## Unsupported Scope
 
-These limitations come mainly from JVM Instrumentation `retransformClasses`:
+These limitations come mainly from JVM Instrumentation `redefineClasses`:
 
 | Unsupported change | Reason |
 | --- | --- |
@@ -615,6 +606,19 @@ Check:
 - The active database profile is correct. The default is `local,mysql`.
 - Database service is running, and database name, username, password, and JDBC URL match the selected `application-{database}.yml`.
 - If you switch database type, update Maven profile, Spring profile, `hot-reload.database-type`, and SQL scripts together.
+
+### What if Byte Buddy Agent installation fails?
+
+The application installs the Agent at startup and verifies that the JVM supports `redefineClasses`. It intentionally does not continue in a degraded mode because a node that can receive tasks but cannot reload classes would produce misleading availability.
+
+Check:
+
+- Use a full JDK rather than a reduced JRE without Attach API support.
+- Verify that container security policies, JVM options, and operating-system permissions allow self-attach.
+- Verify that the JVM implementation supports class redefinition.
+- In restricted environments, add `-javaagent:/path/to/byte-buddy-agent-1.18.8.jar` to the startup command so Instrumentation is registered during JVM startup.
+
+MyBatis XML reload does not use Byte Buddy Agent. This demo still validates the Agent at startup so every registered node has the complete class reload capability.
 
 ### Why did restart recovery not work?
 

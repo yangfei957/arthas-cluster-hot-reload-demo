@@ -10,7 +10,7 @@ import java.util.Date;
 /**
  * 热重载节点执行实例。
  * <p>
- * 一个任务会按目标 IP 拆成多个实例，每个实例记录一个节点的执行状态、错误信息和 Arthas 返回结果。
+ * 一个任务会按目标 IP 拆成多个实例，每个实例记录一个节点的执行状态、错误信息和热重载返回结果。
  */
 @Data
 @ApiModel(value = "HotReloadTaskInstanceVO", description = "热重载节点执行实例")
@@ -36,7 +36,7 @@ public class HotReloadTaskInstanceVO implements Serializable {
     private String errorCode;
     @ApiModelProperty(value = "错误消息，执行失败时记录异常摘要")
     private String errorMessage;
-    @ApiModelProperty(value = "热重载执行结果，保存 Arthas 或 MyBatis 刷新返回信息")
+    @ApiModelProperty(value = "热重载执行结果，保存 Byte Buddy Agent 或 MyBatis 刷新返回信息")
     private String reloadResult;
     @ApiModelProperty(value = "重试次数")
     private Integer retryCount;

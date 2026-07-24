@@ -31,19 +31,19 @@ import java.util.stream.Collectors;
 public class HotReloadRuntimeExecutor {
 
     private final SqlSessionFactory sqlSessionFactory;
-    private final ArthasClassReloadExecutor arthasClassReloadExecutor;
+    private final ByteBuddyClassReloadExecutor byteBuddyClassReloadExecutor;
     private final Object xmlReloadLock = new Object();
 
     /**
      * 构造热重载运行时执行器。
      *
      * @param sqlSessionFactory         MyBatis 会话工厂，用于刷新 Mapper XML
-     * @param arthasClassReloadExecutor Arthas class 重载执行器
+     * @param byteBuddyClassReloadExecutor Byte Buddy Agent class 重载执行器
      */
     public HotReloadRuntimeExecutor(SqlSessionFactory sqlSessionFactory,
-                                    ArthasClassReloadExecutor arthasClassReloadExecutor) {
+                                    ByteBuddyClassReloadExecutor byteBuddyClassReloadExecutor) {
         this.sqlSessionFactory = sqlSessionFactory;
-        this.arthasClassReloadExecutor = arthasClassReloadExecutor;
+        this.byteBuddyClassReloadExecutor = byteBuddyClassReloadExecutor;
     }
 
     /**
@@ -51,28 +51,27 @@ public class HotReloadRuntimeExecutor {
      *
      * @param classBytes class 文件内容
      * @return 热重载结果
-     * @throws Exception Arthas 执行失败时抛出
+     * @throws Exception Byte Buddy Agent 执行失败时抛出
      */
     public String reloadClass(byte[] classBytes) throws Exception {
         return reloadClassRuntime(classBytes);
     }
 
     /**
-     * 使用 Arthas retransform 替换 JVM 中已经加载的 class。
+     * 使用 Byte Buddy Agent redefine 替换 JVM 中已经加载的 class。
      *
      * @param classBytes class 文件内容
      * @return 热重载结果
-     * @throws Exception Arthas 执行失败时抛出
+     * @throws Exception Byte Buddy Agent 执行失败时抛出
      */
     public String reloadClassRuntime(byte[] classBytes) throws Exception {
         if (classBytes == null || classBytes.length == 0) {
             throw new IllegalArgumentException("class 文件字节不能为空");
         }
         String className = HotReloadUtils.parseClassName(classBytes);
-        ensureClassLoaded(className);
-        String arthasResult = arthasClassReloadExecutor.reloadClass(classBytes);
+        String byteBuddyResult = byteBuddyClassReloadExecutor.reloadClass(classBytes);
         log.info("class 热重载成功，className={}", className);
-        return "class 热重载成功，className=" + className + "，arthasResult=" + arthasResult;
+        return "class 热重载成功，className=" + className + "，byteBuddyResult=" + byteBuddyResult;
     }
 
     /**
@@ -138,19 +137,6 @@ public class HotReloadRuntimeExecutor {
         MappedStatement mappedStatement = configuration.getMappedStatement(statementId, false);
         return mappedStatement.getId() + " => "
                 + mappedStatement.getBoundSql(new Object()).getSql().replaceAll("\\s+", " ").trim();
-    }
-
-    /**
-     * 尝试主动加载目标类，提前暴露 class 不在当前进程中的风险。
-     *
-     * @param className 完整类名
-     */
-    private void ensureClassLoaded(String className) {
-        try {
-            Class.forName(className);
-        } catch (ClassNotFoundException e) {
-            log.warn("类尚未加载或不在 classpath 中，className={}，Arthas retransform 可能失败", className);
-        }
     }
 
     /**
