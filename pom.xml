@@ -12,9 +12,9 @@
     </parent>
 
     <groupId>io.github.hotreload</groupId>
-    <artifactId>arthas-cluster-hot-reload-demo</artifactId>
+    <artifactId>cluster-hot-reload-demo</artifactId>
     <version>0.1.0-SNAPSHOT</version>
-    <name>arthas-cluster-hot-reload-demo</name>
+    <name>cluster-hot-reload-demo</name>
     <description>Spring Boot cluster hot reload demo based on Byte Buddy Agent, Redis broadcast and relational database logs.</description>
 
     <properties>

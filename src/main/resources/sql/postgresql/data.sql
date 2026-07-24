@@ -15,7 +15,7 @@ INSERT INTO T_SYS_CONFIG_DETAIL(CONFIG_CODE, DETAIL_CODE, DETAIL_VALUE, REMARK, 
 VALUES (
     'RELOAD_CONFIG',
     'RELOAD_SERVICE',
-    '[ { "appName": "arthas-cluster-hot-reload-demo", "nodeTotal": "2" } ]',
+    '[ { "appName": "cluster-hot-reload-demo", "nodeTotal": "2" } ]',
     '热重载服务下拉配置',
     'system',
     CURRENT_TIMESTAMP,

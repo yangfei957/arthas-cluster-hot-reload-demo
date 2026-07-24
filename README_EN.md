@@ -1,4 +1,4 @@
-<h1 align="center">arthas-cluster-hot-reload-demo</h1>
+<h1 align="center">cluster-hot-reload-demo</h1>
 
 <p align="center">
   <strong>Cluster hot reload demo based on Byte Buddy Agent, Redis broadcast, and database execution logs</strong>
@@ -141,7 +141,7 @@ server:
 
 spring:
   application:
-    name: arthas-cluster-hot-reload-demo
+    name: cluster-hot-reload-demo
   profiles:
     active: local,mysql
   redis:
@@ -254,7 +254,7 @@ Seed data includes:
 ```json
 [
   {
-    "appName": "arthas-cluster-hot-reload-demo",
+    "appName": "cluster-hot-reload-demo",
     "nodeTotal": "2"
   }
 ]
@@ -378,7 +378,7 @@ Data comes from `T_SYS_CONFIG_DETAIL` with `RELOAD_CONFIG / RELOAD_SERVICE`. `no
 ### 2. Refresh Target Nodes
 
 ```text
-POST /hotReloadCluster/discover?appName=arthas-cluster-hot-reload-demo
+POST /hotReloadCluster/discover?appName=cluster-hot-reload-demo
 ```
 
 This publishes a Redis `DISCOVER_REQUEST` message. Nodes matching `appName + env` write their current node information to Redis:
@@ -390,7 +390,7 @@ hotreload:{env}:{appName}:nodes
 ### 3. Query Nodes
 
 ```text
-POST /hotReloadCluster/nodes?appName=arthas-cluster-hot-reload-demo
+POST /hotReloadCluster/nodes?appName=cluster-hot-reload-demo
 ```
 
 Returned fields include:
@@ -421,7 +421,7 @@ Form fields:
 
 ```json
 {
-  "appName": "arthas-cluster-hot-reload-demo",
+  "appName": "cluster-hot-reload-demo",
   "persistOnRestart": "N",
   "ips": [
     "198.18.0.1"
@@ -464,7 +464,7 @@ Request body:
   "pageStart": 1,
   "pageNums": 10,
   "requestVo": {
-    "appName": "arthas-cluster-hot-reload-demo",
+    "appName": "cluster-hot-reload-demo",
     "env": "local",
     "reloadType": "CLASS"
   }
@@ -534,7 +534,7 @@ Request body:
 
 ```json
 {
-  "appName": "arthas-cluster-hot-reload-demo",
+  "appName": "cluster-hot-reload-demo",
   "fileType": "*",
   "ips": [
     "198.18.0.1"

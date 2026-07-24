@@ -20,7 +20,7 @@ public class HotReloadAppVO implements Serializable {
     /**
      * 服务应用名称。
      */
-    @ApiModelProperty(value = "服务应用名称，用于区分不同后端服务模块", example = "arthas-cluster-hot-reload-demo")
+    @ApiModelProperty(value = "服务应用名称，用于区分不同后端服务模块", example = "cluster-hot-reload-demo")
     private String appName;
 
     /**

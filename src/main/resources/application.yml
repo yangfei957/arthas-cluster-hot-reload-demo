@@ -3,7 +3,7 @@ server:
 
 spring:
   application:
-    name: arthas-cluster-hot-reload-demo
+    name: cluster-hot-reload-demo
   profiles:
     active: local,mysql
   mvc:

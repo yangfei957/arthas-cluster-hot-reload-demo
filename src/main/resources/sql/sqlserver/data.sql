@@ -15,7 +15,7 @@ INSERT INTO dbo.T_SYS_CONFIG_DETAIL(CONFIG_CODE, DETAIL_CODE, DETAIL_VALUE, REMA
 VALUES (
     'RELOAD_CONFIG',
     'RELOAD_SERVICE',
-    N'[ { "appName": "arthas-cluster-hot-reload-demo", "nodeTotal": "2" } ]',
+    N'[ { "appName": "cluster-hot-reload-demo", "nodeTotal": "2" } ]',
     N'热重载服务下拉配置',
     'system',
     SYSDATETIME(),
