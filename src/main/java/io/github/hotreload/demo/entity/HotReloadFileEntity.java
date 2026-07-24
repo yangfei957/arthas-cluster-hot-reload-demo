@@ -9,7 +9,7 @@ import lombok.EqualsAndHashCode;
 /**
  * 热重载补丁文件实体。
  * <p>
- * 对应 T_HOT_RELOAD_FILE 表，用于保存上传文件内容、文件类型和 Spring Bean 解析信息。
+ * 对应 T_HOT_RELOAD_FILE 表，用于保存上传文件内容、文件类型和 class 解析信息。
  */
 @EqualsAndHashCode(callSuper = true)
 @Data
@@ -41,12 +41,6 @@ public class HotReloadFileEntity extends BaseEntity {
      */
     @TableField("FILE_TYPE")
     private String fileType;
-
-    /**
-     * Spring Bean 重载时使用的 Bean 名称。
-     */
-    @TableField("BEAN_NAME")
-    private String beanName;
 
     /**
      * 从 class 文件解析出的类名。

@@ -43,9 +43,7 @@ public final class HotReloadConstants {
     public static final String EXECUTE_TYPE_STOP_RECOVERY = "STOP_RECOVERY";
 
     public static final String FILE_TYPE_ALL = "*";
-    public static final String FILE_TYPE_AUTO = "AUTO";
-    public static final String FILE_TYPE_SPRING_BEAN = "SPRING_BEAN";
-    public static final String FILE_TYPE_COMMON_CLASS = "COMMON_CLASS";
+    public static final String FILE_TYPE_CLASS = "CLASS";
     public static final String FILE_TYPE_MYBATIS_XML = "MYBATIS_XML";
 
     public static final String FLAG_Y = "Y";

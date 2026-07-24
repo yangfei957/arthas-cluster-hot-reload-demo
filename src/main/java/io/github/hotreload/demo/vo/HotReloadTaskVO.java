@@ -29,7 +29,7 @@ public class HotReloadTaskVO implements Serializable {
     private String patchName;
     @ApiModelProperty(value = "上传补丁文件 SHA-256 摘要，用于识别文件内容是否一致；非文件类任务为空")
     private String patchSha256;
-    @ApiModelProperty(value = "文件类型或停止恢复范围，SPRING_BEAN/COMMON_CLASS/MYBATIS_XML/*", example = "SPRING_BEAN")
+    @ApiModelProperty(value = "文件类型或停止恢复范围，CLASS/MYBATIS_XML/*", example = "CLASS")
     private String reloadType;
     @ApiModelProperty(value = "正常热重载是否保存恢复文件，Y 表示重启后自动恢复，N 表示只在当前进程生效", example = "N")
     private String persistOnRestart;

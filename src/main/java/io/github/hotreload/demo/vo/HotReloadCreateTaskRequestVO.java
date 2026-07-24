@@ -26,22 +26,10 @@ public class HotReloadCreateTaskRequestVO implements Serializable {
     private String appName;
 
     /**
-     * 重载类型，AUTO 表示服务端自动识别。
-     */
-    @ApiModelProperty(value = "重载类型，AUTO 自动识别，SPRING_BEAN 表示 Spring Bean，COMMON_CLASS 表示普通类，MYBATIS_XML 表示 MyBatis XML", example = "AUTO")
-    private String reloadType;
-
-    /**
      * 容器重启后是否继续保持本次重载。
      */
     @ApiModelProperty(value = "容器重启后是否继续保持本次重载，Y 表示保存恢复文件，N 表示只在当前进程生效", example = "N")
     private String persistOnRestart;
-
-    /**
-     * Spring Bean 重载时使用的 BeanName。
-     */
-    @ApiModelProperty(value = "Spring Bean 热重载时指定的 BeanName，未传时服务端会按 class 文件解析结果自动匹配", example = "testHotReloadServiceImpl")
-    private String beanName;
 
     /**
      * 任务备注。

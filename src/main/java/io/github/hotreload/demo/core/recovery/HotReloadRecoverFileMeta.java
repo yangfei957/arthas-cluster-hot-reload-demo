@@ -51,11 +51,6 @@ public class HotReloadRecoverFileMeta implements Serializable {
     private String fileType;
 
     /**
-     * Spring Bean 热重载使用的 BeanName。
-     */
-    private String beanName;
-
-    /**
      * class 文件解析出的类名。
      */
     private String className;

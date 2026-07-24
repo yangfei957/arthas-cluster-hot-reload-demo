@@ -76,5 +76,5 @@
 
   <rect x="128" y="374" width="1024" height="70" rx="16" fill="#ffffff" stroke="#e2e8f0"/>
   <text class="note" x="158" y="402">页面查询任务详情或日志分页时，从数据库汇总任务主表和节点实例状态；失败、超时、预检查失败的节点实例可以重试。</text>
-  <text class="note" x="158" y="426">如果 persistOnRestart=Y，节点会把 class/xml 和 .meta 写入本地 hot-reload 目录，服务重启后自动恢复。</text>
+  <text class="note" x="158" y="426">如果 persistOnRestart=Y，节点会把 class/xml 的 zip 恢复包写入本地 hot-reload 目录，服务重启后自动恢复。</text>
 </svg>

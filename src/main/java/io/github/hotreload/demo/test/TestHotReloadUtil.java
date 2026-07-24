@@ -1,7 +1,7 @@
 package io.github.hotreload.demo.test;
 
 /**
- * 普通 class 热重载测试工具类。
+ * class 热重载测试工具类。
  * <p>
  * 该类不由 Spring 容器管理，适合验证工具类或常量类方法体修改后的热重载效果。
  */

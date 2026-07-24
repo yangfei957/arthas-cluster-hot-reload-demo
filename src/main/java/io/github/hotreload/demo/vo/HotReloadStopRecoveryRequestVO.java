@@ -29,7 +29,7 @@ public class HotReloadStopRecoveryRequestVO implements Serializable {
     /**
      * 停止恢复范围，空或 * 表示全部。
      */
-    @ApiModelProperty(value = "停止恢复范围，空或 * 表示全部，SPRING_BEAN 表示 Spring Bean，COMMON_CLASS 表示普通类，MYBATIS_XML 表示 MyBatis XML", example = "*")
+    @ApiModelProperty(value = "停止恢复范围，空或 * 表示全部，CLASS 表示 JVM class，MYBATIS_XML 表示 MyBatis XML", example = "*")
     private String fileType;
 
     /**

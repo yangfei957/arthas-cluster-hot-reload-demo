@@ -20,13 +20,19 @@ This is a Spring Boot cluster hot reload demo built with Arthas, Redis Pub/Sub, 
 
 It demonstrates how to send a `.class` file or a MyBatis Mapper XML file to one or more Spring Boot service instances, reload it locally on each selected node without restarting the service, and write every task and node-level execution result back to the database.
 
+## Branches
+
+- `main`: release line for the Arthas implementation.
+- `arthas`: complete class reload implementation based on the Arthas HTTP API.
+- `master`: class reload implementation based on Byte Buddy Agent and JVM Instrumentation.
+
 ## Features
 
 | Feature | Description |
 | --- | --- |
 | Node discovery | Refresh nodes through Redis broadcast. Nodes register with `appName + env + ip`. |
 | Targeted dispatch | The caller passes an IP list. Only selected nodes execute the task. |
-| Multiple reload types | Supports Spring Bean class, plain Java class, and MyBatis Mapper XML. |
+| Multiple reload types | Supports JVM class and MyBatis Mapper XML. |
 | Traceable process | Tasks, uploaded files, node instances, statuses, errors, and reload results are stored in the database. |
 | Failure retry | Failed, pre-check failed, or timeout node instances can be retried. |
 | Restart recovery | A successful reload can be saved locally and replayed after service restart. |
@@ -57,8 +63,7 @@ This project provides a runnable reference workflow:
 
 ## What It Demonstrates
 
-- Spring Bean method-body hot reload.
-- Plain Java class method-body hot reload.
+- JVM class method-body hot reload through one `CLASS` type for both Spring-managed and plain Java classes.
 - MyBatis Mapper XML SQL hot reload.
 - Cluster node discovery and targeted node dispatch.
 - Node-level task instance status, retry, and log query.
@@ -348,9 +353,7 @@ hot-reload-secret: demo-hot-reload
 
 Parameters:
 
-- `file`: uploaded `.class` or `.xml` file.
-- `type`: optional. Supports `SPRING_BEAN`, `COMMON_CLASS`, `MYBATIS_XML`.
-- `beanName`: optional. Used when reloading a Spring Bean class.
+- `file`: uploaded `.class` or `.xml` file. The server maps the suffix to `CLASS` or `MYBATIS_XML`.
 
 Example file:
 
@@ -421,7 +424,7 @@ Content-Type: multipart/form-data
 
 Form fields:
 
-- `file`: uploaded `.class` or `.xml` file.
+- `file`: uploaded `.class` or `.xml` file. The server maps the suffix to `CLASS` or `MYBATIS_XML`.
 - `request`: JSON string.
 
 `request` example:
@@ -429,7 +432,6 @@ Form fields:
 ```json
 {
   "appName": "arthas-cluster-hot-reload-demo",
-  "reloadType": "COMMON_CLASS",
   "persistOnRestart": "N",
   "ips": [
     "198.18.0.1"
@@ -441,10 +443,8 @@ Form fields:
 Field notes:
 
 - `appName`: target service module. Required.
-- `reloadType`: `AUTO`, `SPRING_BEAN`, `COMMON_CLASS`, `MYBATIS_XML`.
 - `persistOnRestart`: whether to automatically recover this reload after service restart. Supports `Y/N`.
 - `ips`: target node IP list.
-- `beanName`: optional for Spring Bean class reload. If omitted, the system tries to match the class to a Spring Bean.
 - `taskRemark`: task remark.
 
 ### 5. Query Task Detail
@@ -476,7 +476,7 @@ Request body:
   "requestVo": {
     "appName": "arthas-cluster-hot-reload-demo",
     "env": "local",
-    "reloadType": "SPRING_BEAN"
+    "reloadType": "CLASS"
   }
 }
 ```
@@ -514,9 +514,8 @@ After a node reloads successfully, it saves a recovery package under the local `
 
 ```text
 hot-reload/
-├── spring-bean
-│   └── TestHotReloadServiceImpl.zip
-├── common-class
+├── class
+│   ├── TestHotReloadServiceImpl.zip
 │   └── TestHotReloadUtil.zip
 └── mybatis-xml
     └── TestHotReloadMapper.zip
@@ -557,8 +556,7 @@ Request body:
 `fileType` supports:
 
 - `*`: all types.
-- `SPRING_BEAN`: Spring Bean class.
-- `COMMON_CLASS`: plain Java class.
+- `CLASS`: JVM class.
 - `MYBATIS_XML`: MyBatis Mapper XML.
 
 This API deletes target nodes' local zip recovery packages under the matching `hot-reload` subdirectories.
@@ -567,8 +565,7 @@ This API deletes target nodes' local zip recovery packages under the matching `h
 
 | Type | Scope | Notes |
 | --- | --- | --- |
-| Spring Bean method body | `Service`, `Manager`, `Component`, and other Spring-managed Beans | Suitable for changing existing method logic. |
-| Plain Java class | Utility classes, constants, or other classes not managed by Spring | Suitable for changing existing static or instance method logic. |
+| JVM class | Spring-managed classes, utility classes, and other loaded Java classes | Uses the single `CLASS` type without extra type or Bean parameters. |
 | MyBatis Mapper XML | `select`, `insert`, `update`, `delete` SQL | Supports changing SQL, adding/removing statements, and changing result maps. |
 
 ## Unsupported Scope
@@ -629,7 +626,6 @@ Common causes:
 - The task failed, so recovery files were never saved.
 - The task was created with `persistOnRestart=N`.
 - The stop recovery API was called and removed the package.
-- Spring Bean recovery package lacks the correct BeanName metadata.
 - Uploaded class changed a JVM-unsupported structure, so recovery still fails.
 
 ### What if nodes count differs from nodeTotal?
@@ -669,6 +665,6 @@ Suggested validation order:
 1. Run `test-hot-reload.http` to see the pre-reload result.
 2. Run discovery and node query in `hot-reload-cluster.http`.
 3. Put the returned node IP into `targetIp`.
-4. Execute Spring Bean, plain class, or MyBatis XML hot reload.
+4. Execute JVM class or MyBatis XML hot reload.
 5. Run `test-hot-reload.http` again to verify the changed result.
 6. Query task detail or log pages to verify database execution records.

@@ -98,17 +98,15 @@ public class HotReloadRecoveryRunner implements ApplicationContextAware {
      */
     private void recoverSafely() {
         try {
-            List<File> springBeanFiles = recoverFileStore.listSpringBeanFiles();
-            List<File> commonClassFiles = recoverFileStore.listCommonClassFiles();
+            List<File> classFiles = recoverFileStore.listClassFiles();
             List<File> myBatisXmlFiles = recoverFileStore.listMyBatisXmlFiles();
-            if (springBeanFiles.isEmpty() && commonClassFiles.isEmpty() && myBatisXmlFiles.isEmpty()) {
+            if (classFiles.isEmpty() && myBatisXmlFiles.isEmpty()) {
                 log.info("未发现热重载恢复文件");
                 return;
             }
             waitForArthas();
             log.info("本地检测到恢复文件，热重载自动恢复开始运行");
-            recoverSpringBeans(springBeanFiles);
-            recoverCommonClasses(commonClassFiles);
+            recoverClasses(classFiles);
             recoverMyBatisXml(myBatisXmlFiles);
             log.info("热重载自动恢复已完成");
         } catch (Exception e) {
@@ -135,48 +133,16 @@ public class HotReloadRecoveryRunner implements ApplicationContextAware {
     }
 
     /**
-     * 恢复 Spring Bean class 热重载文件。
+     * 恢复 JVM class 热重载文件。
      */
-    private void recoverSpringBeans(List<File> files) {
+    private void recoverClasses(List<File> files) {
         for (File file : files) {
             Date startTime = new Date();
             try {
-                String beanName = resolveRecoverBeanName(file);
-                String reloadResult = hotReloadRuntimeExecutor.reloadSpringBeanRuntime(beanName,
-                        recoverFileStore.readFile(file), file.getName());
+                String reloadResult = hotReloadRuntimeExecutor.reloadClassRuntime(recoverFileStore.readFile(file));
                 recordRecoverSuccess(file, reloadResult, startTime);
             } catch (Exception e) {
-                log.error("恢复 Spring Bean 失败，file={}，原因={}", file.getName(), e.getMessage());
-                recordRecoverFailed(file, e, startTime);
-            }
-        }
-    }
-
-    /**
-     * 从恢复文件元数据中读取 BeanName。
-     *
-     * @param file 恢复文件
-     * @return Spring BeanName
-     */
-    private String resolveRecoverBeanName(File file) {
-        HotReloadRecoverFileMeta recoverMeta = recoverFileStore.readRecoverMeta(file);
-        if (recoverMeta == null || StringUtils.isBlank(recoverMeta.getBeanName())) {
-            throw new RuntimeException("Spring Bean 恢复元数据缺少 BeanName：" + file.getName());
-        }
-        return recoverMeta.getBeanName();
-    }
-
-    /**
-     * 恢复普通 Java class 热重载文件。
-     */
-    private void recoverCommonClasses(List<File> files) {
-        for (File file : files) {
-            Date startTime = new Date();
-            try {
-                String reloadResult = hotReloadRuntimeExecutor.reloadCommonClassRuntime(recoverFileStore.readFile(file));
-                recordRecoverSuccess(file, reloadResult, startTime);
-            } catch (Exception e) {
-                log.error("恢复普通类失败，file={}，原因={}", file.getName(), e.getMessage());
+                log.error("恢复 class 失败，file={}，原因={}", file.getName(), e.getMessage());
                 recordRecoverFailed(file, e, startTime);
             }
         }

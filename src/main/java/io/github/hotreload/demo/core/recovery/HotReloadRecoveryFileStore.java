@@ -36,67 +36,43 @@ public class HotReloadRecoveryFileStore {
 
     private static final String APP_ROOT_PATH = System.getProperty("user.dir");
     private static final String BASE_DIR = APP_ROOT_PATH + File.separator + "hot-reload" + File.separator;
-    private static final String BEAN_DIR = BASE_DIR + "spring-bean" + File.separator;
-    private static final String COMMON_DIR = BASE_DIR + "common-class" + File.separator;
+    private static final String CLASS_DIR = BASE_DIR + "class" + File.separator;
     private static final String XML_DIR = BASE_DIR + "mybatis-xml" + File.separator;
     private static final String RECOVER_PACKAGE_SUFFIX = ".zip";
     private static final String META_ENTRY_NAME = "meta.json";
 
     /**
-     * 同步 Spring Bean class 恢复文件。
+     * 同步 class 恢复文件。
      *
      * @param fileName         上传文件名
-     * @param beanName         Spring BeanName
      * @param classBytes       class 文件内容
      * @param persistOnRestart 是否需要重启恢复
      */
-    public void syncSpringBeanRecoverFile(String fileName, String beanName, byte[] classBytes,
-                                          boolean persistOnRestart) {
-        syncSpringBeanRecoverFile(fileName, beanName, classBytes, persistOnRestart, null);
+    public void syncClassRecoverFile(String fileName, byte[] classBytes, boolean persistOnRestart) {
+        syncClassRecoverFile(fileName, classBytes, persistOnRestart, null);
     }
 
     /**
-     * 同步 Spring Bean class 恢复文件和元数据。
+     * 同步 class 恢复文件和元数据。
      *
      * @param fileName         上传文件名
-     * @param beanName         Spring BeanName
      * @param classBytes       class 文件内容
      * @param persistOnRestart 是否需要重启恢复
      * @param recoverMeta      恢复文件元数据
      */
-    public void syncSpringBeanRecoverFile(String fileName, String beanName, byte[] classBytes,
-                                          boolean persistOnRestart, HotReloadRecoverFileMeta recoverMeta) {
-        String originalFileName = resolveSpringBeanRecoverFileName(fileName);
-        String recoverFileName = toRecoverPackageFileName(originalFileName);
-        HotReloadRecoverFileMeta actualMeta = fillBeanNameMeta(beanName, recoverMeta);
-        saveOrDeleteRecoverFile(BEAN_DIR + recoverFileName, originalFileName, classBytes,
-                persistOnRestart, actualMeta);
-    }
-
-    /**
-     * 同步普通 class 恢复文件。
-     *
-     * @param classBytes       class 文件内容
-     * @param persistOnRestart 是否需要重启恢复
-     */
-    public void syncCommonClassRecoverFile(byte[] classBytes, boolean persistOnRestart) {
-        syncCommonClassRecoverFile(classBytes, persistOnRestart, null);
-    }
-
-    /**
-     * 同步普通 class 恢复文件和元数据。
-     *
-     * @param classBytes       class 文件内容
-     * @param persistOnRestart 是否需要重启恢复
-     * @param recoverMeta      恢复文件元数据
-     */
-    public void syncCommonClassRecoverFile(byte[] classBytes, boolean persistOnRestart,
-                                           HotReloadRecoverFileMeta recoverMeta) {
+    public void syncClassRecoverFile(String fileName, byte[] classBytes, boolean persistOnRestart,
+                                     HotReloadRecoverFileMeta recoverMeta) {
         String className = HotReloadUtils.parseClassName(classBytes);
         String defaultFileName = className.substring(className.lastIndexOf('.') + 1) + ".class";
+        if (StringUtils.isNotBlank(fileName)) {
+            defaultFileName = safeFileName(fileName);
+        }
+        if (!StringUtils.endsWithIgnoreCase(defaultFileName, ".class")) {
+            throw new IllegalArgumentException("class 恢复文件必须是 class 文件：" + defaultFileName);
+        }
         String originalFileName = resolveRecoverOriginalFileName(recoverMeta, defaultFileName);
         String recoverFileName = toRecoverPackageFileName(originalFileName);
-        saveOrDeleteRecoverFile(COMMON_DIR + recoverFileName, originalFileName, classBytes,
+        saveOrDeleteRecoverFile(CLASS_DIR + recoverFileName, originalFileName, classBytes,
                 persistOnRestart, recoverMeta);
     }
 
@@ -130,21 +106,12 @@ public class HotReloadRecoveryFileStore {
     }
 
     /**
-     * 列出 Spring Bean class 恢复文件。
+     * 列出 class 恢复文件。
      *
      * @return 按文件名排序后的恢复文件列表
      */
-    public List<File> listSpringBeanFiles() {
-        return listFiles(BEAN_DIR, RECOVER_PACKAGE_SUFFIX);
-    }
-
-    /**
-     * 列出普通 class 恢复文件。
-     *
-     * @return 按文件名排序后的恢复文件列表
-     */
-    public List<File> listCommonClassFiles() {
-        return listFiles(COMMON_DIR, RECOVER_PACKAGE_SUFFIX);
+    public List<File> listClassFiles() {
+        return listFiles(CLASS_DIR, RECOVER_PACKAGE_SUFFIX);
     }
 
     /**
@@ -161,19 +128,15 @@ public class HotReloadRecoveryFileStore {
      * <p>
      * fileType 为空或 * 时删除全部恢复目录文件；指定类型时只删除该类型目录下的 zip 恢复包。
      *
-     * @param fileType 停止恢复范围，支持 *、SPRING_BEAN、COMMON_CLASS、MYBATIS_XML
+     * @param fileType 停止恢复范围，支持 *、CLASS、MYBATIS_XML
      * @return 删除结果摘要
      */
     public String deleteRecoverFiles(String fileType) {
         String targetType = normalizeStopRecoveryFileType(fileType);
         List<String> deleteResults = new ArrayList<>();
         if (HotReloadConstants.FILE_TYPE_ALL.equals(targetType)
-                || HotReloadConstants.FILE_TYPE_SPRING_BEAN.equals(targetType)) {
-            deleteResults.add("Spring Bean 恢复文件：" + deleteRecoverDir(BEAN_DIR) + " 个");
-        }
-        if (HotReloadConstants.FILE_TYPE_ALL.equals(targetType)
-                || HotReloadConstants.FILE_TYPE_COMMON_CLASS.equals(targetType)) {
-            deleteResults.add("普通 class 恢复文件：" + deleteRecoverDir(COMMON_DIR) + " 个");
+                || HotReloadConstants.FILE_TYPE_CLASS.equals(targetType)) {
+            deleteResults.add("class 恢复文件：" + deleteRecoverDir(CLASS_DIR) + " 个");
         }
         if (HotReloadConstants.FILE_TYPE_ALL.equals(targetType)
                 || HotReloadConstants.FILE_TYPE_MYBATIS_XML.equals(targetType)) {
@@ -252,23 +215,6 @@ public class HotReloadRecoveryFileStore {
     }
 
     /**
-     * 解析 Spring Bean 恢复文件名，只保留文件名并校验必须是 class 文件。
-     *
-     * @param fileName 上传文件名
-     * @return 安全的恢复文件名
-     */
-    private String resolveSpringBeanRecoverFileName(String fileName) {
-        String simpleFileName = safeFileName(fileName);
-        if (StringUtils.isBlank(simpleFileName)) {
-            throw new IllegalArgumentException("Spring Bean 恢复文件名不能为空");
-        }
-        if (!StringUtils.endsWithIgnoreCase(simpleFileName, ".class")) {
-            throw new IllegalArgumentException("Spring Bean 恢复文件必须是 class 文件：" + simpleFileName);
-        }
-        return simpleFileName;
-    }
-
-    /**
      * 把原始文件名转换为 zip 恢复包文件名。
      *
      * @param fileName 原始 class/xml 文件名
@@ -296,24 +242,6 @@ public class HotReloadRecoveryFileStore {
             throw new IllegalArgumentException("恢复包原始文件名不能为空");
         }
         return originalFileName;
-    }
-
-    /**
-     * 把 BeanName 补充到恢复元数据中，确保启动恢复时能找到原 Bean。
-     *
-     * @param beanName    Spring BeanName
-     * @param recoverMeta 原始恢复元数据
-     * @return 补齐后的恢复元数据
-     */
-    private HotReloadRecoverFileMeta fillBeanNameMeta(String beanName, HotReloadRecoverFileMeta recoverMeta) {
-        HotReloadRecoverFileMeta actualMeta = recoverMeta;
-        if (actualMeta == null && StringUtils.isNotBlank(beanName)) {
-            actualMeta = new HotReloadRecoverFileMeta();
-        }
-        if (actualMeta != null && StringUtils.isBlank(actualMeta.getBeanName())) {
-            actualMeta.setBeanName(beanName);
-        }
-        return actualMeta;
     }
 
     /**
@@ -358,8 +286,7 @@ public class HotReloadRecoveryFileStore {
         String targetType = StringUtils.defaultIfBlank(StringUtils.trim(fileType), HotReloadConstants.FILE_TYPE_ALL)
                 .toUpperCase();
         if (HotReloadConstants.FILE_TYPE_ALL.equals(targetType)
-                || HotReloadConstants.FILE_TYPE_SPRING_BEAN.equals(targetType)
-                || HotReloadConstants.FILE_TYPE_COMMON_CLASS.equals(targetType)
+                || HotReloadConstants.FILE_TYPE_CLASS.equals(targetType)
                 || HotReloadConstants.FILE_TYPE_MYBATIS_XML.equals(targetType)) {
             return targetType;
         }

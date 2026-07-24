@@ -6,13 +6,13 @@
 
 @baseUrl = http://localhost:8080
 
-### 1. 验证 Spring Bean 热重载结果
-POST {{baseUrl}}/testHotReload/springBean?userId=1001
+### 1. 验证 Service 实现类 class 热重载结果
+POST {{baseUrl}}/testHotReload/serviceClass?userId=1001
 Accept: text/plain
 
 
-### 2. 验证普通 class 热重载结果：原始代码只判断 null，传空字符串会返回 false
-POST {{baseUrl}}/testHotReload/commonClass?value=
+### 2. 验证工具类 class 热重载结果：原始代码只判断 null，传空字符串会返回 false
+POST {{baseUrl}}/testHotReload/utilityClass?value=
 Accept: application/json
 
 

@@ -28,7 +28,7 @@ public class TestHotReloadController {
     /**
      * 构造热重载验证接口。
      *
-     * @param testHotReloadService Spring Bean 热重载测试服务
+     * @param testHotReloadService Service 实现类热重载测试服务
      * @param testHotReloadMapper  MyBatis XML 热重载测试 Mapper
      */
     public TestHotReloadController(TestHotReloadService testHotReloadService,
@@ -38,14 +38,14 @@ public class TestHotReloadController {
     }
 
     /**
-     * 调用 Spring Bean 测试服务。
+     * 调用 Service 实现类测试服务。
      *
      * @param userId 测试用户 ID
-     * @return Spring Bean 方法返回内容
+     * @return Service 实现类方法返回内容
      */
-    @ApiOperation("验证 Spring Bean 热重载")
-    @PostMapping("/springBean")
-    public ResponseEntity<String> springBean(
+    @ApiOperation("验证 Service 实现类 class 热重载")
+    @PostMapping("/serviceClass")
+    public ResponseEntity<String> serviceClass(
             @ApiParam(value = "测试用户 ID", example = "1001")
             @RequestParam(value = "userId", required = false, defaultValue = "1001") Long userId) {
         return ResponseEntity.ok(testHotReloadService.getTestInfo(userId));
@@ -57,13 +57,13 @@ public class TestHotReloadController {
      * @param value 测试字符串
      * @return 工具类方法返回内容
      */
-    @ApiOperation("验证普通 class 热重载")
-    @PostMapping("/commonClass")
-    public ResponseEntity<Map<String, Object>> commonClass(
+    @ApiOperation("验证工具类 class 热重载")
+    @PostMapping("/utilityClass")
+    public ResponseEntity<Map<String, Object>> utilityClass(
             @ApiParam(value = "测试字符串", example = "demo")
             @RequestParam(value = "value", required = false) String value) {
         Map<String, Object> result = new LinkedHashMap<>();
-        result.put("reloadHint", "判断普通 class 是否重载成功请看 empty 字段：value 为空字符串时，热重载前为 false，热重载后为 true");
+        result.put("reloadHint", "判断工具类 class 是否重载成功请看 empty 字段：value 为空字符串时，热重载前为 false，热重载后为 true");
         result.put("value", value);
         result.put("empty", TestHotReloadUtil.isEmpty(value));
         return ResponseEntity.ok(result);
@@ -85,7 +85,7 @@ public class TestHotReloadController {
      *
      * @param userId 测试用户 ID
      * @param value  测试字符串
-     * @return Spring Bean、普通 class 和 MyBatis XML 的当前执行结果
+     * @return Service class、工具类 class 和 MyBatis XML 的当前执行结果
      */
     @ApiOperation("验证全部热重载测试对象")
     @PostMapping("/all")
@@ -95,10 +95,10 @@ public class TestHotReloadController {
             @ApiParam(value = "测试字符串", example = "demo")
             @RequestParam(value = "value", required = false) String value) {
         Map<String, Object> result = new LinkedHashMap<>();
-        result.put("springBean", testHotReloadService.getTestInfo(userId));
-        result.put("commonClassHint", "判断普通 class 是否重载成功请看 commonClassEmpty 字段：value 为空字符串时，热重载前为 false，热重载后为 true");
-        result.put("commonClassValue", value);
-        result.put("commonClassEmpty", TestHotReloadUtil.isEmpty(value));
+        result.put("serviceClass", testHotReloadService.getTestInfo(userId));
+        result.put("utilityClassHint", "判断工具类 class 是否重载成功请看 utilityClassEmpty 字段：value 为空字符串时，热重载前为 false，热重载后为 true");
+        result.put("utilityClassValue", value);
+        result.put("utilityClassEmpty", TestHotReloadUtil.isEmpty(value));
         result.put("myBatisXml", testHotReloadMapper.selectDemoResult());
         return ResponseEntity.ok(result);
     }

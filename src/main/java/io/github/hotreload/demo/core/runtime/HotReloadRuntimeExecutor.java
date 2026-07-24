@@ -2,14 +2,10 @@ package io.github.hotreload.demo.core.runtime;
 
 import io.github.hotreload.demo.util.HotReloadUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.apache.ibatis.builder.xml.XMLMapperBuilder;
 import org.apache.ibatis.mapping.MappedStatement;
 import org.apache.ibatis.session.Configuration;
 import org.apache.ibatis.session.SqlSessionFactory;
-import org.springframework.beans.factory.support.DefaultListableBeanFactory;
-import org.springframework.context.ApplicationContext;
-import org.springframework.context.ApplicationContextAware;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Component;
@@ -27,19 +23,16 @@ import java.util.stream.Collectors;
 /**
  * 热重载运行时执行器。
  * <p>
- * 该组件封装 Spring Bean class、普通 class 和 MyBatis Mapper XML 的实际重载动作，
+ * 该组件封装 JVM class 和 MyBatis Mapper XML 的实际重载动作，
  * 上层集群任务和单机接口都通过它执行本机热重载。
  */
 @Slf4j
 @Component
-public class HotReloadRuntimeExecutor implements ApplicationContextAware {
+public class HotReloadRuntimeExecutor {
 
     private final SqlSessionFactory sqlSessionFactory;
     private final ArthasClassReloadExecutor arthasClassReloadExecutor;
     private final Object xmlReloadLock = new Object();
-
-    private DefaultListableBeanFactory beanFactory;
-    private ApplicationContext applicationContext;
 
     /**
      * 构造热重载运行时执行器。
@@ -54,89 +47,32 @@ public class HotReloadRuntimeExecutor implements ApplicationContextAware {
     }
 
     /**
-     * 保存 Spring 容器上下文，后续用于判断 Bean 是否存在和校验 Bean 对应的真实类。
-     *
-     * @param ctx Spring 应用上下文
-     */
-    @Override
-    public void setApplicationContext(ApplicationContext ctx) {
-        this.beanFactory = (DefaultListableBeanFactory) ctx.getAutowireCapableBeanFactory();
-        this.applicationContext = ctx;
-    }
-
-    /**
-     * 执行 Spring Bean class 热重载。
-     *
-     * @param beanName   页面传入的 BeanName，可为空
-     * @param classBytes class 文件内容
-     * @param fileName   上传文件名
-     * @return 热重载结果
-     * @throws Exception Arthas 执行失败或 Bean 校验失败时抛出
-     */
-    public String reloadSpringBean(String beanName, byte[] classBytes, String fileName) throws Exception {
-        String resolvedBeanName = resolveSpringBeanName(beanName, classBytes);
-        return reloadSpringBeanRuntime(resolvedBeanName, classBytes, fileName);
-    }
-
-    /**
-     * 使用已解析的 BeanName 执行 Spring Bean class 热重载。
-     *
-     * @param beanName   已确认的 Spring BeanName
-     * @param classBytes class 文件内容
-     * @param fileName   上传文件名
-     * @return 热重载结果
-     * @throws Exception Arthas 执行失败或 Bean 校验失败时抛出
-     */
-    public String reloadSpringBeanRuntime(String beanName, byte[] classBytes, String fileName) throws Exception {
-        String newClassName = HotReloadUtils.parseClassName(classBytes);
-        String resolvedBeanName = resolveSpringBeanName(beanName, newClassName);
-        String arthasResult = arthasClassReloadExecutor.reloadClass(classBytes);
-        log.info("Spring Bean 热重载成功，beanName={}，className={}", resolvedBeanName, newClassName);
-        return "Spring Bean 热重载成功，beanName=" + resolvedBeanName
-                + "，className=" + newClassName
-                + "，fileName=" + fileName
-                + "，arthasResult=" + arthasResult;
-    }
-
-    /**
-     * 根据 class 文件内容解析或校验 Spring BeanName。
-     *
-     * @param beanName   页面传入的 BeanName，可为空
-     * @param classBytes class 文件内容
-     * @return 容器中匹配的 BeanName
-     */
-    public String resolveSpringBeanName(String beanName, byte[] classBytes) {
-        String className = HotReloadUtils.parseClassName(classBytes);
-        return resolveSpringBeanName(beanName, className);
-    }
-
-    /**
-     * 执行普通 Java class 热重载。
+     * 执行 JVM class 热重载。
      *
      * @param classBytes class 文件内容
      * @return 热重载结果
      * @throws Exception Arthas 执行失败时抛出
      */
-    public String reloadCommonClass(byte[] classBytes) throws Exception {
-        return reloadCommonClassRuntime(classBytes);
+    public String reloadClass(byte[] classBytes) throws Exception {
+        return reloadClassRuntime(classBytes);
     }
 
     /**
-     * 执行普通 Java class 热重载，不进行 Spring BeanName 校验。
+     * 使用 Arthas retransform 替换 JVM 中已经加载的 class。
      *
      * @param classBytes class 文件内容
      * @return 热重载结果
      * @throws Exception Arthas 执行失败时抛出
      */
-    public String reloadCommonClassRuntime(byte[] classBytes) throws Exception {
+    public String reloadClassRuntime(byte[] classBytes) throws Exception {
         if (classBytes == null || classBytes.length == 0) {
             throw new IllegalArgumentException("class 文件字节不能为空");
         }
         String className = HotReloadUtils.parseClassName(classBytes);
         ensureClassLoaded(className);
         String arthasResult = arthasClassReloadExecutor.reloadClass(classBytes);
-        log.info("普通类热重载成功，className={}", className);
-        return "普通类热重载成功，className=" + className + "，arthasResult=" + arthasResult;
+        log.info("class 热重载成功，className={}", className);
+        return "class 热重载成功，className=" + className + "，arthasResult=" + arthasResult;
     }
 
     /**
@@ -205,125 +141,7 @@ public class HotReloadRuntimeExecutor implements ApplicationContextAware {
     }
 
     /**
-     * 判断指定类是否已经由 Spring 容器管理。
-     *
-     * @param fullClassName class 文件解析出的完整类名
-     * @return true 表示该类对应 Spring Bean
-     */
-    public boolean isSpringBeanInContainer(String fullClassName) {
-        try {
-            String[] beanNames = beanFactory.getBeanDefinitionNames();
-            for (String beanName : beanNames) {
-                if (isBeanMatchClass(beanName, fullClassName)) {
-                    return true;
-                }
-            }
-            return false;
-        } catch (Exception e) {
-            return false;
-        }
-    }
-
-    /**
-     * 从 class 文件字节码中解析完整类名。
-     *
-     * @param classBytes class 文件内容
-     * @return 完整类名
-     */
-    public String parseClassNameFromBytes(byte[] classBytes) {
-        return HotReloadUtils.parseClassName(classBytes);
-    }
-
-    /**
-     * 解析并校验 Spring BeanName。
-     *
-     * @param beanName     页面传入的 BeanName，可为空
-     * @param newClassName class 文件解析出的完整类名
-     * @return 容器中匹配的 BeanName
-     */
-    private String resolveSpringBeanName(String beanName, String newClassName) {
-        String resolvedBeanName = beanName;
-        if (StringUtils.isBlank(resolvedBeanName)) {
-            resolvedBeanName = inferBeanName(newClassName);
-            log.info("自动推断 BeanName：{}", resolvedBeanName);
-        }
-
-        String registeredClassName = null;
-        try {
-            registeredClassName = beanFactory.getBeanDefinition(resolvedBeanName).getBeanClassName();
-        } catch (Exception ignored) {
-        }
-
-        if (registeredClassName == null) {
-            Class<?> type = applicationContext.getType(resolvedBeanName);
-            if (type == null) {
-                throw new RuntimeException("Bean 不存在：" + resolvedBeanName + "，请检查 beanName 是否正确");
-            }
-            registeredClassName = unwrapProxyClassName(type.getName());
-        }
-
-        if (!registeredClassName.equals(newClassName)) {
-            throw new IllegalArgumentException("类不匹配，容器中 [" + resolvedBeanName + "] 对应类："
-                    + registeredClassName + "，上传类：" + newClassName);
-        }
-        return resolvedBeanName;
-    }
-
-    /**
-     * 根据类名在 Spring 容器中查找匹配的 BeanName，找不到时退回到默认首字母小写规则。
-     *
-     * @param fullClassName 完整类名
-     * @return 推断出的 BeanName
-     */
-    private String inferBeanName(String fullClassName) {
-        try {
-            String[] beanNames = beanFactory.getBeanDefinitionNames();
-            for (String beanName : beanNames) {
-                if (isBeanMatchClass(beanName, fullClassName)) {
-                    return beanName;
-                }
-            }
-        } catch (Exception ignored) {
-        }
-        String simpleName = fullClassName.substring(fullClassName.lastIndexOf('.') + 1);
-        return Character.toLowerCase(simpleName.charAt(0)) + simpleName.substring(1);
-    }
-
-    /**
-     * 判断指定 Bean 是否对应上传 class 文件解析出的类名。
-     *
-     * @param beanName      Spring BeanName
-     * @param fullClassName 完整类名
-     * @return true 表示 Bean 与 class 文件匹配
-     */
-    private boolean isBeanMatchClass(String beanName, String fullClassName) {
-        try {
-            String beanClassName = beanFactory.getBeanDefinition(beanName).getBeanClassName();
-            if (fullClassName.equals(beanClassName)) {
-                return true;
-            }
-            Class<?> type = beanFactory.getType(beanName);
-            if (type != null) {
-                return fullClassName.equals(type.getName())
-                        || fullClassName.equals(unwrapProxyClassName(type.getName()));
-            }
-        } catch (Exception ignored) {
-        }
-        return false;
-    }
-
-    /**
-     * 去掉 Spring CGLIB 代理类名后缀，得到用户代码中的原始类名。
-     *
-     * @param typeName Spring 返回的类型名称
-     * @return 去代理后的类名
-     */
-    private String unwrapProxyClassName(String typeName) {
-        return typeName.contains("$$") ? typeName.substring(0, typeName.indexOf("$$")) : typeName;
-    }
-
-    /**
-     * 尝试主动加载目标类，提前暴露普通 class 不在当前进程中的风险。
+     * 尝试主动加载目标类，提前暴露 class 不在当前进程中的风险。
      *
      * @param className 完整类名
      */

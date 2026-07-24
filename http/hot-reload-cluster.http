@@ -30,7 +30,7 @@ POST {{baseUrl}}/hotReloadCluster/currentNode
 Accept: application/json
 
 
-### 5. 创建集群热重载任务：自动识别 Spring Bean class
+### 5. 创建集群热重载任务：根据 .class 后缀识别 Service 实现类
 POST {{baseUrl}}/hotReloadCluster/task/create
 Content-Type: multipart/form-data; boundary=WebAppBoundary
 Accept: application/json
@@ -46,17 +46,16 @@ Content-Type: application/json
 
 {
   "appName": "{{appName}}",
-  "reloadType": "AUTO",
   "persistOnRestart": "N",
   "ips": [
     "{{targetIp}}"
   ],
-  "taskRemark": "演示集群热重载 Spring Bean class"
+  "taskRemark": "演示集群热重载 class"
 }
 --WebAppBoundary--
 
 
-### 6. 创建集群热重载任务：指定普通 class
+### 6. 创建集群热重载任务：根据 .class 后缀识别工具类
 POST {{baseUrl}}/hotReloadCluster/task/create
 Content-Type: multipart/form-data; boundary=WebAppBoundary
 Accept: application/json
@@ -72,7 +71,6 @@ Content-Type: application/json
 
 {
   "appName": "{{appName}}",
-  "reloadType": "COMMON_CLASS",
   "persistOnRestart": "Y",
   "ips": [
     "{{targetIp}}"
@@ -82,7 +80,7 @@ Content-Type: application/json
 --WebAppBoundary--
 
 
-### 7. 创建集群热重载任务：指定 MyBatis Mapper XML
+### 7. 创建集群热重载任务：根据 .xml 后缀识别 MyBatis Mapper XML
 POST {{baseUrl}}/hotReloadCluster/task/create
 Content-Type: multipart/form-data; boundary=WebAppBoundary
 Accept: application/json
@@ -98,7 +96,6 @@ Content-Type: application/json
 
 {
   "appName": "{{appName}}",
-  "reloadType": "MYBATIS_XML",
   "persistOnRestart": "Y",
   "ips": [
     "{{targetIp}}"
@@ -124,9 +121,7 @@ Content-Type: application/json
 
 {
   "appName": "{{appName}}",
-  "reloadType": "SPRING_BEAN",
   "persistOnRestart": "Y",
-  "beanName": "testHotReloadServiceImpl",
   "ips": [
     "{{targetIp}}"
   ],
@@ -206,16 +201,16 @@ Accept: application/json
 }
 
 
-### 14. 停止目标节点 Spring Bean 热重载内容的重启自动恢复
+### 14. 停止目标节点 class 热重载内容的重启自动恢复
 POST {{baseUrl}}/hotReloadCluster/restartRecovery/stop
 Content-Type: application/json
 Accept: application/json
 
 {
   "appName": "{{appName}}",
-  "fileType": "SPRING_BEAN",
+  "fileType": "CLASS",
   "ips": [
     "{{targetIp}}"
   ],
-  "taskRemark": "演示只停止 Spring Bean 热重载内容的重启自动恢复"
+  "taskRemark": "演示只停止 class 热重载内容的重启自动恢复"
 }

@@ -1,6 +1,7 @@
 package io.github.hotreload.demo.controller;
 
 import io.github.hotreload.demo.config.reload.HotReloadAccessGuard;
+import io.github.hotreload.demo.core.cluster.HotReloadConstants;
 import io.github.hotreload.demo.core.recovery.HotReloadRecoveryFileStore;
 import io.github.hotreload.demo.core.runtime.ArthasClassReloadExecutor;
 import io.github.hotreload.demo.core.runtime.HotReloadRuntimeExecutor;
@@ -60,19 +61,13 @@ public class StandaloneHotReloadController {
      *
      * @param request  HTTP 请求，Header 中需要携带热重载密钥
      * @param file     上传的 class 或 XML 文件
-     * @param type     可选热重载类型，未传时自动识别
-     * @param beanName Spring Bean 热重载时可选的 BeanName
      * @return 热重载执行结果
      */
     @ApiOperation("单机执行热重载")
     @PostMapping("/hot-reload/all")
     public String hotReload(HttpServletRequest request,
-                            @ApiParam(value = "上传的 .class 或 .xml 文件", required = true)
-                            @RequestParam("file") MultipartFile file,
-                            @ApiParam("热重载类型，支持 SPRING_BEAN、COMMON_CLASS、MYBATIS_XML")
-                            @RequestParam(value = "type", required = false) String type,
-                            @ApiParam("Spring Bean 名称，未传时按 class 文件自动匹配")
-                            @RequestParam(value = "beanName", required = false) String beanName) {
+                            @ApiParam(value = "上传的 .class 或 .xml 文件，服务端按后缀识别类型", required = true)
+                            @RequestParam("file") MultipartFile file) {
         if (!hotReloadAccessGuard.check(request)) {
             return "密钥错误";
         }
@@ -82,21 +77,12 @@ public class StandaloneHotReloadController {
                 fileBytes = HotReloadUtils.readBytes(inputStream);
             }
             String fileName = StringUtils.trim(file.getOriginalFilename());
-            if (StringUtils.isBlank(fileName)) {
-                fileName = "unknown_" + System.currentTimeMillis();
+            String actualType = resolveReloadType(fileName);
+            validateReloadFile(actualType, fileBytes, fileName);
+            if (HotReloadConstants.FILE_TYPE_CLASS.equals(actualType)) {
+                return reloadClass(fileBytes, fileName);
             }
-            String actualType = StringUtils.isBlank(type) ? autoDetectFileType(fileBytes, fileName) : type.toUpperCase();
-            validateUploadFileName(fileName);
-            if ("SPRING_BEAN".equals(actualType)) {
-                return reloadSpringBean(beanName, fileBytes, fileName);
-            }
-            if ("COMMON_CLASS".equals(actualType)) {
-                return reloadCommonClass(fileBytes);
-            }
-            if ("MYBATIS_XML".equals(actualType)) {
-                return reloadMyBatisXml(fileBytes);
-            }
-            return "不支持的类型，请指定 SPRING_BEAN、COMMON_CLASS 或 MYBATIS_XML";
+            return reloadMyBatisXml(fileBytes);
         } catch (Exception e) {
             log.error("单机热重载失败", e);
             return "热重载失败：" + e.getMessage();
@@ -121,31 +107,16 @@ public class StandaloneHotReloadController {
     }
 
     /**
-     * 执行 Spring Bean class 热重载并写入恢复文件。
+     * 执行 JVM class 热重载并写入恢复文件。
      *
-     * @param beanName  页面传入的 BeanName，可为空
      * @param fileBytes class 文件内容
      * @param fileName  上传文件名
      * @return 热重载执行结果
      * @throws Exception 热重载或恢复文件写入失败时抛出
      */
-    private String reloadSpringBean(String beanName, byte[] fileBytes, String fileName) throws Exception {
-        String resolvedBeanName = hotReloadRuntimeExecutor.resolveSpringBeanName(beanName, fileBytes);
-        String reloadResult = hotReloadRuntimeExecutor.reloadSpringBeanRuntime(resolvedBeanName, fileBytes, fileName);
-        recoverFileStore.syncSpringBeanRecoverFile(fileName, resolvedBeanName, fileBytes, true);
-        return reloadResult + "，persistOnRestart=true";
-    }
-
-    /**
-     * 执行普通 Java class 热重载并写入恢复文件。
-     *
-     * @param fileBytes class 文件内容
-     * @return 热重载执行结果
-     * @throws Exception 热重载或恢复文件写入失败时抛出
-     */
-    private String reloadCommonClass(byte[] fileBytes) throws Exception {
-        String reloadResult = hotReloadRuntimeExecutor.reloadCommonClassRuntime(fileBytes);
-        recoverFileStore.syncCommonClassRecoverFile(fileBytes, true);
+    private String reloadClass(byte[] fileBytes, String fileName) throws Exception {
+        String reloadResult = hotReloadRuntimeExecutor.reloadClassRuntime(fileBytes);
+        recoverFileStore.syncClassRecoverFile(fileName, fileBytes, true);
         return reloadResult + "，persistOnRestart=true";
     }
 
@@ -163,36 +134,35 @@ public class StandaloneHotReloadController {
     }
 
     /**
-     * 校验上传文件后缀是否在热重载支持范围内。
+     * 根据上传文件后缀识别热重载类型。
      *
      * @param fileName 上传文件名
+     * @return CLASS 或 MYBATIS_XML
      */
-    private void validateUploadFileName(String fileName) {
-        if (StringUtils.isBlank(fileName)
-                || !(StringUtils.endsWithIgnoreCase(fileName, ".class")
-                || StringUtils.endsWithIgnoreCase(fileName, ".xml"))) {
-            throw new IllegalArgumentException("热重载文件只允许上传 .class 或 .xml 文件：" + fileName);
+    private String resolveReloadType(String fileName) {
+        if (StringUtils.endsWithIgnoreCase(fileName, ".class")) {
+            return HotReloadConstants.FILE_TYPE_CLASS;
         }
+        if (StringUtils.endsWithIgnoreCase(fileName, ".xml")) {
+            return HotReloadConstants.FILE_TYPE_MYBATIS_XML;
+        }
+        throw new IllegalArgumentException("热重载文件只允许上传 .class 或 .xml 文件：" + fileName);
     }
 
     /**
-     * 根据文件内容自动识别热重载类型。
+     * 校验文件内容是否与后缀识别出的类型一致。
      *
+     * @param fileType  文件后缀对应的热重载类型
      * @param fileBytes 上传文件内容
      * @param fileName  上传文件名
-     * @return 热重载类型
      */
-    private String autoDetectFileType(byte[] fileBytes, String fileName) {
-        if (isClassFile(fileBytes)) {
-            return detectClassType(fileBytes);
+    private void validateReloadFile(String fileType, byte[] fileBytes, String fileName) {
+        if (HotReloadConstants.FILE_TYPE_CLASS.equals(fileType) && !isClassFile(fileBytes)) {
+            throw new IllegalArgumentException("热重载文件不是有效的 class 文件：" + fileName);
         }
-        if (isMyBatisXml(fileBytes)) {
-            return "MYBATIS_XML";
+        if (HotReloadConstants.FILE_TYPE_MYBATIS_XML.equals(fileType) && !isMyBatisXml(fileBytes)) {
+            throw new IllegalArgumentException("热重载文件不是 MyBatis Mapper XML：" + fileName);
         }
-        if (StringUtils.endsWithIgnoreCase(fileName, ".xml")) {
-            throw new IllegalArgumentException("XML 文件内容不含 <mapper namespace，非 MyBatis Mapper 文件");
-        }
-        throw new IllegalArgumentException("无法自动识别文件类型，请手动指定 type 参数");
     }
 
     /**
@@ -230,18 +200,5 @@ public class StandaloneHotReloadController {
             }
         }
         return false;
-    }
-
-    /**
-     * 根据 class 文件解析类名，并判断该类是否已经由 Spring 容器管理。
-     *
-     * @param fileBytes class 文件内容
-     * @return SPRING_BEAN 或 COMMON_CLASS
-     */
-    private String detectClassType(byte[] fileBytes) {
-        String className = hotReloadRuntimeExecutor.parseClassNameFromBytes(fileBytes);
-        boolean springBean = hotReloadRuntimeExecutor.isSpringBeanInContainer(className);
-        log.info("解析类名：{}，是否为 Spring Bean：{}", className, springBean);
-        return springBean ? "SPRING_BEAN" : "COMMON_CLASS";
     }
 }

@@ -26,7 +26,7 @@ public class HotReloadTaskLogQueryVO implements Serializable {
     private String env;
     @ApiModelProperty(value = "操作对象名称，正常热重载时可按上传文件名定位任务", example = "TestHotReloadServiceImpl.class")
     private String patchName;
-    @ApiModelProperty(value = "文件类型或停止恢复范围，SPRING_BEAN/COMMON_CLASS/MYBATIS_XML/*", example = "SPRING_BEAN")
+    @ApiModelProperty(value = "文件类型或停止恢复范围，CLASS/MYBATIS_XML/*", example = "CLASS")
     private String reloadType;
     @ApiModelProperty(value = "任务汇总状态", example = "FAILED")
     private String status;

@@ -69,17 +69,9 @@ public class HotReloadClusterServiceImpl implements HotReloadClusterService {
             HotReloadConstants.INSTANCE_STATUS_TIMEOUT
     ));
 
-    private static final Set<String> SUPPORTED_RELOAD_TYPES = new HashSet<>(Arrays.asList(
-            HotReloadConstants.FILE_TYPE_AUTO,
-            HotReloadConstants.FILE_TYPE_SPRING_BEAN,
-            HotReloadConstants.FILE_TYPE_COMMON_CLASS,
-            HotReloadConstants.FILE_TYPE_MYBATIS_XML
-    ));
-
     private static final Set<String> SUPPORTED_STOP_RECOVERY_FILE_TYPES = new HashSet<>(Arrays.asList(
             HotReloadConstants.FILE_TYPE_ALL,
-            HotReloadConstants.FILE_TYPE_SPRING_BEAN,
-            HotReloadConstants.FILE_TYPE_COMMON_CLASS,
+            HotReloadConstants.FILE_TYPE_CLASS,
             HotReloadConstants.FILE_TYPE_MYBATIS_XML
     ));
 
@@ -245,8 +237,8 @@ public class HotReloadClusterServiceImpl implements HotReloadClusterService {
         String appName = requestVO.getAppName();
         String fileName = normalizeUploadFileName(file.getOriginalFilename());
         byte[] fileBytes = readFileBytes(file);
-        String reloadType = detectReloadType(fileBytes, fileName, requestVO.getReloadType());
-        String beanName = resolveBeanNameIfNecessary(reloadType, requestVO.getBeanName(), fileBytes);
+        String reloadType = resolveReloadType(fileName);
+        validateReloadFile(reloadType, fileBytes, fileName);
         String className = parseClassNameQuietly(fileBytes);
         String taskId = newId("TASK");
         String fileSha256 = HotReloadUtils.sha256(fileBytes);
@@ -267,7 +259,6 @@ public class HotReloadClusterServiceImpl implements HotReloadClusterService {
         fileEntity.setTaskId(taskId);
         fileEntity.setFileName(fileName);
         fileEntity.setFileType(reloadType);
-        fileEntity.setBeanName(beanName);
         fileEntity.setClassName(className);
         fileEntity.setFileSha256(fileSha256);
         fileEntity.setFileContent(fileBytes);
@@ -709,12 +700,8 @@ public class HotReloadClusterServiceImpl implements HotReloadClusterService {
     private String executeFile(HotReloadFileEntity fileEntity) throws Exception {
         String fileType = fileEntity.getFileType();
         byte[] fileContent = fileEntity.getFileContent();
-        if (HotReloadConstants.FILE_TYPE_SPRING_BEAN.equals(fileType)) {
-            return hotReloadRuntimeExecutor.reloadSpringBeanRuntime(fileEntity.getBeanName(), fileContent,
-                    fileEntity.getFileName());
-        }
-        if (HotReloadConstants.FILE_TYPE_COMMON_CLASS.equals(fileType)) {
-            return hotReloadRuntimeExecutor.reloadCommonClassRuntime(fileContent);
+        if (HotReloadConstants.FILE_TYPE_CLASS.equals(fileType)) {
+            return hotReloadRuntimeExecutor.reloadClassRuntime(fileContent);
         }
         if (HotReloadConstants.FILE_TYPE_MYBATIS_XML.equals(fileType)) {
             return hotReloadRuntimeExecutor.reloadMyBatisXmlRuntime(fileContent);
@@ -750,11 +737,9 @@ public class HotReloadClusterServiceImpl implements HotReloadClusterService {
         String fileType = fileEntity.getFileType();
         byte[] fileContent = fileEntity.getFileContent();
         HotReloadRecoverFileMeta recoverMeta = buildRecoverFileMeta(taskEntity, fileEntity);
-        if (HotReloadConstants.FILE_TYPE_SPRING_BEAN.equals(fileType)) {
-            recoverFileStore.syncSpringBeanRecoverFile(fileEntity.getFileName(), fileEntity.getBeanName(),
-                    fileContent, persistOnRestart, recoverMeta);
-        } else if (HotReloadConstants.FILE_TYPE_COMMON_CLASS.equals(fileType)) {
-            recoverFileStore.syncCommonClassRecoverFile(fileContent, persistOnRestart, recoverMeta);
+        if (HotReloadConstants.FILE_TYPE_CLASS.equals(fileType)) {
+            recoverFileStore.syncClassRecoverFile(fileEntity.getFileName(), fileContent,
+                    persistOnRestart, recoverMeta);
         } else if (HotReloadConstants.FILE_TYPE_MYBATIS_XML.equals(fileType)) {
             recoverFileStore.syncMyBatisXmlRecoverFile(fileContent, persistOnRestart, recoverMeta);
         } else {
@@ -779,7 +764,6 @@ public class HotReloadClusterServiceImpl implements HotReloadClusterService {
         recoverMeta.setFileId(fileEntity.getFileId());
         recoverMeta.setFileName(fileEntity.getFileName());
         recoverMeta.setFileType(fileEntity.getFileType());
-        recoverMeta.setBeanName(fileEntity.getBeanName());
         recoverMeta.setClassName(fileEntity.getClassName());
         recoverMeta.setFileSha256(fileEntity.getFileSha256());
         return recoverMeta;
@@ -1396,7 +1380,6 @@ public class HotReloadClusterServiceImpl implements HotReloadClusterService {
      * @param requestVO 创建任务请求
      */
     private void fillCreateTaskRequest(HotReloadCreateTaskRequestVO requestVO) {
-        requestVO.setReloadType(StringUtils.defaultIfBlank(requestVO.getReloadType(), HotReloadConstants.FILE_TYPE_AUTO));
         requestVO.setPersistOnRestart(normalizePersistOnRestart(requestVO.getPersistOnRestart()));
     }
 
@@ -1510,52 +1493,30 @@ public class HotReloadClusterServiceImpl implements HotReloadClusterService {
     }
 
     /**
-     * 识别热重载文件类型。
+     * 根据上传文件后缀识别热重载类型。
      *
-     * @param fileBytes     上传文件内容
-     * @param fileName      上传文件名
-     * @param requestedType 页面指定类型，AUTO 表示自动识别
-     * @return 最终热重载类型
+     * @param fileName 上传文件名
+     * @return CLASS 或 MYBATIS_XML
      */
-    private String detectReloadType(byte[] fileBytes, String fileName, String requestedType) {
-        String type = StringUtils.defaultIfBlank(StringUtils.trim(requestedType), HotReloadConstants.FILE_TYPE_AUTO)
-                .toUpperCase();
-        if (!SUPPORTED_RELOAD_TYPES.contains(type)) {
-            throw new HotReloadException("不支持的热重载类型：" + requestedType);
+    private String resolveReloadType(String fileName) {
+        if (StringUtils.endsWithIgnoreCase(fileName, ".class")) {
+            return HotReloadConstants.FILE_TYPE_CLASS;
         }
-        if (!HotReloadConstants.FILE_TYPE_AUTO.equals(type)) {
-            validateReloadFile(type, fileBytes, fileName);
-            return type;
-        }
-        if (isClassFile(fileBytes)) {
-            String className = HotReloadUtils.parseClassName(fileBytes);
-            return hotReloadRuntimeExecutor.isSpringBeanInContainer(className)
-                    ? HotReloadConstants.FILE_TYPE_SPRING_BEAN
-                    : HotReloadConstants.FILE_TYPE_COMMON_CLASS;
-        }
-        if (isMyBatisXml(fileBytes)) {
+        if (StringUtils.endsWithIgnoreCase(fileName, ".xml")) {
             return HotReloadConstants.FILE_TYPE_MYBATIS_XML;
         }
-        throw new HotReloadException("不支持的热重载文件：" + fileName);
+        throw new HotReloadException("热重载文件只允许上传 .class 或 .xml 文件：" + fileName);
     }
 
     /**
-     * 按指定热重载类型校验文件内容。
+     * 校验后缀识别出的热重载文件内容。
      *
-     * @param reloadType 热重载类型
+     * @param reloadType 根据文件后缀识别出的热重载类型
      * @param fileBytes  上传文件内容
      * @param fileName   上传文件名
      */
     private void validateReloadFile(String reloadType, byte[] fileBytes, String fileName) {
-        if (HotReloadConstants.FILE_TYPE_SPRING_BEAN.equals(reloadType)) {
-            validateClassFile(fileBytes, fileName);
-            String className = HotReloadUtils.parseClassName(fileBytes);
-            if (!hotReloadRuntimeExecutor.isSpringBeanInContainer(className)) {
-                throw new HotReloadException("上传类不是 Spring Bean：" + className);
-            }
-            return;
-        }
-        if (HotReloadConstants.FILE_TYPE_COMMON_CLASS.equals(reloadType)) {
+        if (HotReloadConstants.FILE_TYPE_CLASS.equals(reloadType)) {
             validateClassFile(fileBytes, fileName);
             return;
         }
@@ -1600,21 +1561,6 @@ public class HotReloadClusterServiceImpl implements HotReloadClusterService {
         String targetFileName = StringUtils.trim(fileName);
         validateUploadFileName(targetFileName);
         return targetFileName;
-    }
-
-    /**
-     * Spring Bean 热重载时解析 BeanName，其他类型保持原值。
-     *
-     * @param reloadType 热重载类型
-     * @param beanName   页面传入 BeanName
-     * @param fileBytes  上传文件内容
-     * @return 最终 BeanName
-     */
-    private String resolveBeanNameIfNecessary(String reloadType, String beanName, byte[] fileBytes) {
-        if (HotReloadConstants.FILE_TYPE_SPRING_BEAN.equals(reloadType)) {
-            return hotReloadRuntimeExecutor.resolveSpringBeanName(beanName, fileBytes);
-        }
-        return beanName;
     }
 
     /**

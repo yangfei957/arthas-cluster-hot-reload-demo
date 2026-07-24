@@ -7,7 +7,7 @@
 @baseUrl = http://localhost:8080
 @secretKey = demo-hot-reload
 
-### 1. 单机热重载：自动识别 Spring Bean class
+### 1. 单机热重载：根据 .class 后缀识别 Service 实现类
 POST {{baseUrl}}/standaloneHotReload/hot-reload/all
 hot-reload-secret: {{secretKey}}
 Content-Type: multipart/form-data; boundary=WebAppBoundary
@@ -21,22 +21,8 @@ Content-Type: application/octet-stream
 --WebAppBoundary--
 
 
-### 2. 单机热重载：指定 Spring Bean class 和 beanName
-POST {{baseUrl}}/standaloneHotReload/hot-reload/all?type=SPRING_BEAN&beanName=testHotReloadServiceImpl
-hot-reload-secret: {{secretKey}}
-Content-Type: multipart/form-data; boundary=WebAppBoundary
-Accept: text/plain
-
---WebAppBoundary
-Content-Disposition: form-data; name="file"; filename="TestHotReloadServiceImpl.class"
-Content-Type: application/octet-stream
-
-< ../src/main/java/io/github/hotreload/demo/test/reload-after/TestHotReloadServiceImpl.class
---WebAppBoundary--
-
-
-### 3. 单机热重载：指定普通 class
-POST {{baseUrl}}/standaloneHotReload/hot-reload/all?type=COMMON_CLASS
+### 2. 单机热重载：根据 .class 后缀识别工具类
+POST {{baseUrl}}/standaloneHotReload/hot-reload/all
 hot-reload-secret: {{secretKey}}
 Content-Type: multipart/form-data; boundary=WebAppBoundary
 Accept: text/plain
@@ -49,8 +35,8 @@ Content-Type: application/octet-stream
 --WebAppBoundary--
 
 
-### 4. 单机热重载：指定 MyBatis Mapper XML
-POST {{baseUrl}}/standaloneHotReload/hot-reload/all?type=MYBATIS_XML
+### 3. 单机热重载：根据 .xml 后缀识别 MyBatis Mapper XML
+POST {{baseUrl}}/standaloneHotReload/hot-reload/all
 hot-reload-secret: {{secretKey}}
 Content-Type: multipart/form-data; boundary=WebAppBoundary
 Accept: text/plain
@@ -63,7 +49,7 @@ Content-Type: application/xml
 --WebAppBoundary--
 
 
-### 5. 调用 Arthas version 命令
+### 4. 调用 Arthas version 命令
 POST {{baseUrl}}/standaloneHotReload/hot-reload/command
 Content-Type: application/json
 Accept: text/plain
@@ -73,7 +59,7 @@ Accept: text/plain
 }
 
 
-### 6. 调用 Arthas jad 命令查看测试类
+### 5. 调用 Arthas jad 命令查看测试类
 POST {{baseUrl}}/standaloneHotReload/hot-reload/command
 Content-Type: application/json
 Accept: text/plain
@@ -83,7 +69,7 @@ Accept: text/plain
 }
 
 
-### 7. 调用 Arthas sc 命令查看类加载信息
+### 6. 调用 Arthas sc 命令查看类加载信息
 POST {{baseUrl}}/standaloneHotReload/hot-reload/command
 Content-Type: application/json
 Accept: text/plain
