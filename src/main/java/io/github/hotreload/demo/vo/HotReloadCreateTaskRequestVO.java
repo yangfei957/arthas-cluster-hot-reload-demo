@@ -22,7 +22,7 @@ public class HotReloadCreateTaskRequestVO implements Serializable {
     /**
      * 目标应用名称。
      */
-    @ApiModelProperty(value = "目标应用名称，需要与服务注册到 Redis 的 appName 一致", example = "arthas-cluster-hot-reload-demo", required = true)
+    @ApiModelProperty(value = "目标应用名称，需要与服务注册到 Redis 的 appName 一致", example = "cluster-hot-reload-demo", required = true)
     private String appName;
 
     /**

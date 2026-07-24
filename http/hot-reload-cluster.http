@@ -6,7 +6,7 @@
 ### 4. create 接口没有返回 taskId，可通过日志分页接口或数据库拿到 taskId 后填入下面变量。
 
 @baseUrl = http://localhost:8080
-@appName = arthas-cluster-hot-reload-demo
+@appName = cluster-hot-reload-demo
 @targetIp = 198.18.0.1
 @taskId = STOP-20260701135904-2899e9d1
 

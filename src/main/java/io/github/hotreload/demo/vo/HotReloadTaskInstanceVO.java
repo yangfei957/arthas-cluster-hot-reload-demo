@@ -22,7 +22,7 @@ public class HotReloadTaskInstanceVO implements Serializable {
     private String taskInstanceId;
     @ApiModelProperty(value = "所属任务 ID", example = "HR20260629120000001")
     private String taskId;
-    @ApiModelProperty(value = "目标应用名称", example = "arthas-cluster-hot-reload-demo")
+    @ApiModelProperty(value = "目标应用名称", example = "cluster-hot-reload-demo")
     private String appName;
     @ApiModelProperty(value = "运行环境", example = "local")
     private String env;

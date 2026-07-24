@@ -21,7 +21,7 @@ public class HotReloadNodeVO implements Serializable {
     /**
      * 应用名称。
      */
-    @ApiModelProperty(value = "应用名称，同一套 Redis 中用 appName 区分不同服务模块", example = "arthas-cluster-hot-reload-demo")
+    @ApiModelProperty(value = "应用名称，同一套 Redis 中用 appName 区分不同服务模块", example = "cluster-hot-reload-demo")
     private String appName;
 
     /**

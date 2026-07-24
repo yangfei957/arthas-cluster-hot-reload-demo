@@ -1,4 +1,4 @@
-<h1 align="center">arthas-cluster-hot-reload-demo</h1>
+<h1 align="center">cluster-hot-reload-demo</h1>
 
 <p align="center">
   <strong>Arthas 集群热重载示例：Redis 广播任务，数据库记录过程，节点本机执行热更新</strong>
@@ -22,9 +22,8 @@
 
 ## 分支说明
 
-- `main`：Arthas 版本发布主线。
-- `arthas`：保留 Arthas HTTP API 执行 class 热重载的完整实现。
-- `master`：使用 Byte Buddy Agent 和 JVM Instrumentation 执行 class 热重载。
+- `main`：默认分支，使用 Byte Buddy Agent 和 JVM Instrumentation 执行 class 热重载。
+- `arthas`：当前分支，保留 Arthas HTTP API 执行 class 热重载的完整实现。
 
 ## 能力速览
 
@@ -141,7 +140,7 @@ server:
 
 spring:
   application:
-    name: arthas-cluster-hot-reload-demo
+    name: cluster-hot-reload-demo
   profiles:
     active: local,mysql
   redis:
@@ -259,7 +258,7 @@ MyBatis XML 热重载刷新的是当前项目唯一 `SqlSessionFactory` 的 `Con
 ```json
 [
   {
-    "appName": "arthas-cluster-hot-reload-demo",
+    "appName": "cluster-hot-reload-demo",
     "nodeTotal": "2"
   }
 ]
@@ -390,7 +389,7 @@ POST /hotReloadCluster/apps
 ### 2. 刷新目标应用节点
 
 ```text
-POST /hotReloadCluster/discover?appName=arthas-cluster-hot-reload-demo
+POST /hotReloadCluster/discover?appName=cluster-hot-reload-demo
 ```
 
 调用后会向 Redis 发送 `DISCOVER_REQUEST` 消息。匹配 `appName + env` 的节点会把当前节点信息写入 Redis：
@@ -402,7 +401,7 @@ hotreload:{env}:{appName}:nodes
 ### 3. 查询节点列表
 
 ```text
-POST /hotReloadCluster/nodes?appName=arthas-cluster-hot-reload-demo
+POST /hotReloadCluster/nodes?appName=cluster-hot-reload-demo
 ```
 
 返回字段包括：
@@ -433,7 +432,7 @@ Content-Type: multipart/form-data
 
 ```json
 {
-  "appName": "arthas-cluster-hot-reload-demo",
+  "appName": "cluster-hot-reload-demo",
   "persistOnRestart": "N",
   "ips": [
     "198.18.0.1"
@@ -476,7 +475,7 @@ POST /hotReloadCluster/task/log/page
   "pageStart": 1,
   "pageNums": 10,
   "requestVo": {
-    "appName": "arthas-cluster-hot-reload-demo",
+    "appName": "cluster-hot-reload-demo",
     "env": "local",
     "reloadType": "CLASS"
   }
@@ -546,7 +545,7 @@ POST /hotReloadCluster/restartRecovery/stop
 
 ```json
 {
-  "appName": "arthas-cluster-hot-reload-demo",
+  "appName": "cluster-hot-reload-demo",
   "fileType": "*",
   "ips": [
     "198.18.0.1"
